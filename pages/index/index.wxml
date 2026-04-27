@@ -1,0 +1,76 @@
+<!--首页 - 展示推荐钱币和快速入口-->
+<view class="container">
+  <!-- 欢迎区域 -->
+  <view class="header card">
+    <view class="header-content">
+      <text class="welcome">欢迎来到古钱币收藏</text>
+      <text class="subtitle">记录您的收藏历程</text>
+    </view>
+    <view class="upload-btn" bindtap="goToUpload">
+      <text class="upload-icon">+</text>
+      <text>上传藏品</text>
+    </view>
+  </view>
+
+  <!-- 统计概览 -->
+  <view class="stats-card card">
+    <view class="section-title">收藏概览</view>
+    <view class="stats-grid">
+      <view class="stat-item">
+        <text class="stat-number">{{stats.collectedVariants}}</text>
+        <text class="stat-label">已收藏版别</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-number">{{stats.totalVariants}}</text>
+        <text class="stat-label">总版别数</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-number">{{stats.totalImages}}</text>
+        <text class="stat-label">上传图片</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-number">{{stats.totalVariants > 0 ? Math.round(stats.collectedVariants / stats.totalVariants * 100) : 0}}%</text>
+        <text class="stat-label">收藏进度</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 分类导航 -->
+  <view class="category-section">
+    <view class="section-header">
+      <text class="section-title">钱币分类</text>
+      <text class="more-link" bindtap="goToCategory">查看全部 ></text>
+    </view>
+    <view class="category-grid">
+      <view 
+        class="category-item card" 
+        wx:for="{{categories}}" 
+        wx:key="id"
+        data-id="{{item.id}}"
+        data-name="{{item.name}}"
+        bindtap="goToDetail"
+      >
+        <view class="category-icon">💰</view>
+        <text class="category-name">{{item.name}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 最近收藏 -->
+  <view class="recent-section" wx:if="{{recentCollection.length > 0}}">
+    <view class="section-title">最近收藏</view>
+    <view class="recent-list">
+      <view class="recent-item card" wx:for="{{recentCollection}}" wx:key="id">
+        <image 
+          class="recent-image" 
+          src="{{item.images[0] || '/images/placeholder.png'}}" 
+          mode="aspectFill"
+        />
+        <view class="recent-info">
+          <text class="recent-name">{{item.name}}</text>
+          <text class="recent-date">{{item.date}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,114 @@
+/**
+ * 分类页面样式
+ */
+.page-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+}
+
+.category-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.category-item {
+  padding: 24rpx;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+}
+
+.category-icon-large {
+  font-size: 80rpx;
+  margin-right: 24rpx;
+}
+
+.category-info {
+  flex: 1;
+}
+
+.category-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.category-desc {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.arrow-right {
+  font-size: 40rpx;
+  color: #ccc;
+}
+
+/* 导航头 */
+.nav-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+  padding: 20rpx 0;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 20rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+  margin-right: 20rpx;
+}
+
+.back-arrow {
+  font-size: 36rpx;
+  margin-right: 8rpx;
+  color: #8B4513;
+}
+
+.nav-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+/* 年代列表 */
+.era-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.era-item {
+  padding: 24rpx;
+}
+
+.era-header {
+  margin-bottom: 12rpx;
+}
+
+.era-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.era-years {
+  font-size: 26rpx;
+  color: #999;
+  display: block;
+}
+
+.era-arrow {
+  text-align: right;
+  color: #8B4513;
+  font-size: 26rpx;
+}

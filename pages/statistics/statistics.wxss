@@ -1,0 +1,249 @@
+/**
+ * 统计页面样式
+ */
+.page-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+}
+
+/* 总览卡片 */
+.overview-card {
+  margin-bottom: 20rpx;
+}
+
+.stats-header {
+  margin-bottom: 20rpx;
+}
+
+.stats-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.stat-box {
+  text-align: center;
+  padding: 24rpx;
+  background-color: #f9f9f9;
+  border-radius: 12rpx;
+}
+
+.stat-value {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #8B4513;
+  margin-bottom: 8rpx;
+}
+
+.stat-value.large {
+  font-size: 48rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #666;
+}
+
+/* 进度条 */
+.progress-container {
+  margin-top: 20rpx;
+}
+
+.progress-bar {
+  height: 16rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #8B4513, #A0522D);
+  border-radius: 8rpx;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 12rpx;
+  display: block;
+  text-align: center;
+}
+
+/* 分类统计 */
+.section-card {
+  margin-bottom: 20rpx;
+}
+
+.category-stats {
+  margin-top: 16rpx;
+}
+
+.category-stat-item {
+  padding: 20rpx 0;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.category-stat-item:last-child {
+  border-bottom: none;
+}
+
+.category-stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.category-stat-name {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.category-stat-rate {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #8B4513;
+}
+
+.category-stat-bar {
+  height: 12rpx;
+  background-color: #f0f0f0;
+  border-radius: 6rpx;
+  overflow: hidden;
+  margin-bottom: 8rpx;
+}
+
+.category-stat-fill {
+  height: 100%;
+  background-color: #8B4513;
+  border-radius: 6rpx;
+  transition: width 0.3s ease;
+}
+
+.category-stat-detail {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* 年代统计 */
+.era-stats {
+  margin-top: 16rpx;
+}
+
+.era-stat-item {
+  padding: 20rpx 0;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.era-stat-item:last-child {
+  border-bottom: none;
+}
+
+.era-stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.era-stat-info {
+  flex: 1;
+}
+
+.era-stat-name {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.era-stat-category {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.era-stat-rate {
+  font-size: 28rpx;
+  font-weight: bold;
+  padding: 6rpx 16rpx;
+  border-radius: 4rpx;
+}
+
+.era-stat-rate.high {
+  color: #4caf50;
+  background-color: #e8f5e9;
+}
+
+.era-stat-rate.low {
+  color: #ff9800;
+  background-color: #fff3e0;
+}
+
+.era-stat-detail {
+  font-size: 24rpx;
+  color: #666;
+}
+
+/* 活动列表 */
+.activity-list {
+  margin-top: 16rpx;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  padding: 16rpx 0;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-image {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 8rpx;
+  margin-right: 16rpx;
+  background-color: #f0f0f0;
+}
+
+.activity-info {
+  flex: 1;
+}
+
+.activity-name {
+  font-size: 28rpx;
+  color: #333;
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.activity-date {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.activity-count {
+  margin-left: 16rpx;
+}
+
+.count-tag {
+  font-size: 24rpx;
+  color: #8B4513;
+  padding: 6rpx 12rpx;
+  background-color: #f0f0f0;
+  border-radius: 4rpx;
+}

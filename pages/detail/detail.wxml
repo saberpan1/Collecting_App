@@ -1,0 +1,90 @@
+<!--详情页面 - 展示版别列表-->
+<view class="container">
+  <!-- 标题和筛选 -->
+  <view class="header-section">
+    <text class="page-title">{{title}}</text>
+    <view class="filter-bar">
+      <view 
+        class="filter-item {{filterType === 'all' ? 'active' : ''}}"
+        data-type="all"
+        bindtap="filterVariants"
+      >
+        全部
+      </view>
+      <view 
+        class="filter-item {{filterType === 'collected' ? 'active' : ''}}"
+        data-type="collected"
+        bindtap="filterVariants"
+      >
+        已收藏
+      </view>
+      <view 
+        class="filter-item {{filterType === 'uncollected' ? 'active' : ''}}"
+        data-type="uncollected"
+        bindtap="filterVariants"
+      >
+        未收藏
+      </view>
+    </view>
+  </view>
+
+  <!-- 版别列表 -->
+  <view class="variants-list" wx:if="{{filteredVariants.length > 0}}">
+    <view 
+      class="variant-group card" 
+      wx:for="{{filteredVariants}}" 
+      wx:key="id"
+    >
+      <view class="variant-header">
+        <text class="variant-name">{{item.name}}</text>
+        <text class="variant-era">{{item.eraName}}</text>
+      </view>
+      
+      <view class="sub-variants">
+        <view 
+          class="sub-variant-item" 
+          wx:for="{{item.subVariants}}" 
+          wx:key="id"
+          wx:for-item="sub"
+        >
+          <view class="sub-variant-info">
+            <text class="sub-variant-name">{{sub.name}}</text>
+            <view class="sub-variant-status">
+              <text class="status-tag {{sub.collected ? 'collected' : ''}}">
+                {{sub.collected ? '✓ 已收藏' : '○ 未收藏'}}
+              </text>
+              <text class="image-count" wx:if="{{sub.images && sub.images.length > 0}}">
+                📷 {{sub.images.length}}
+              </text>
+            </view>
+          </view>
+          
+          <view class="sub-variant-actions">
+            <view 
+              class="upload-btn-small" 
+              data-variant-id="{{sub.id}}"
+              data-variant-name="{{sub.name}}"
+              bindtap="goToUpload"
+            >
+              {{sub.collected ? '添加图片' : '收藏并上传'}}
+            </view>
+            
+            <view 
+              class="view-images-btn" 
+              wx:if="{{sub.images && sub.images.length > 0}}"
+              data-images="{{sub.images}}"
+              bindtap="previewImages"
+            >
+              查看图片
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:else>
+    <text>暂无版别数据</text>
+  </view>
+</view>

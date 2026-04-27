@@ -1,0 +1,101 @@
+<!--上传页面 - 用户上传古钱币图片-->
+<view class="container">
+  <view class="page-title">上传藏品</view>
+  
+  <!-- 版别信息 -->
+  <view class="variant-info card">
+    <text class="variant-label">当前版别</text>
+    <text class="variant-name">{{variantName}}</text>
+  </view>
+
+  <!-- 图片类型选择 -->
+  <view class="type-selector card">
+    <text class="section-title">图片类型</text>
+    <view class="type-options">
+      <view 
+        class="type-option {{imageType === 'front' ? 'active' : ''}}"
+        data-type="front"
+        bindtap="changeImageType"
+      >
+        正面
+      </view>
+      <view 
+        class="type-option {{imageType === 'back' ? 'active' : ''}}"
+        data-type="back"
+        bindtap="changeImageType"
+      >
+        背面
+      </view>
+      <view 
+        class="type-option {{imageType === 'other' ? 'active' : ''}}"
+        data-type="other"
+        bindtap="changeImageType"
+      >
+        其他
+      </view>
+    </view>
+  </view>
+
+  <!-- 图片列表 -->
+  <view class="upload-section card">
+    <text class="section-title">上传图片 ({{images.length}}/{{maxImages}})</text>
+    
+    <view class="image-grid">
+      <view 
+        class="image-item" 
+        wx:for="{{images}}" 
+        wx:key="createTime"
+      >
+        <image 
+          class="image-preview" 
+          src="{{item.url}}" 
+          mode="aspectFill"
+          data-index="{{index}}"
+          bindtap="previewImage"
+        />
+        <view class="image-type-tag">{{item.type === 'front' ? '正面' : item.type === 'back' ? '背面' : '其他'}}</view>
+        <view 
+          class="delete-btn" 
+          data-index="{{index}}"
+          bindtap="deleteImage"
+        >
+          ×
+        </view>
+      </view>
+      
+      <!-- 添加图片按钮 -->
+      <view 
+        class="add-image-btn" 
+        wx:if="{{images.length < maxImages}}"
+        bindtap="chooseImage"
+      >
+        <text class="add-icon">+</text>
+        <text class="add-text">选择图片</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 备注输入 -->
+  <view class="note-section card">
+    <text class="section-title">备注说明</text>
+    <textarea 
+      class="note-input"
+      placeholder="请输入备注信息（可选）"
+      value="{{note}}"
+      bindinput="onNoteInput"
+      maxlength="200"
+    />
+  </view>
+
+  <!-- 保存按钮 -->
+  <view class="action-section">
+    <button 
+      class="save-btn" 
+      bindtap="saveImages"
+      loading="{{isUploading}}"
+      disabled="{{isUploading}}"
+    >
+      {{isUploading ? '保存中...' : '保存'}}
+    </button>
+  </view>
+</view>

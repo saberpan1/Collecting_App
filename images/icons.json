@@ -1,0 +1,26 @@
+{
+  "description": "图标资源目录",
+  "icons": {
+    "tabBar": [
+      "home.png",
+      "home-active.png",
+      "category.png",
+      "category-active.png",
+      "stats.png",
+      "stats-active.png",
+      "mine.png",
+      "mine-active.png"
+    ],
+    "category": [
+      "category-qin.png",
+      "category-han.png",
+      "category-song.png",
+      "category-ming.png",
+      "category-min.png"
+    ],
+    "placeholder": [
+      "placeholder.png"
+    ]
+  },
+  "note": "请在此目录下添加上述图标文件，图标尺寸建议参考 README.md 文件"
+}

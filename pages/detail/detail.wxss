@@ -1,0 +1,134 @@
+/**
+ * 详情页面样式
+ */
+.header-section {
+  margin-bottom: 20rpx;
+}
+
+.filter-bar {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+
+.filter-item {
+  flex: 1;
+  text-align: center;
+  padding: 16rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+  color: #666;
+}
+
+.filter-item.active {
+  background-color: #8B4513;
+  color: #fff;
+}
+
+/* 版别列表 */
+.variants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.variant-group {
+  padding: 24rpx;
+}
+
+.variant-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+  padding-bottom: 16rpx;
+  border-bottom: 2rpx solid #f0f0f0;
+}
+
+.variant-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.variant-era {
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* 子版别 */
+.sub-variants {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.sub-variant-item {
+  padding: 20rpx;
+  background-color: #f9f9f9;
+  border-radius: 8rpx;
+}
+
+.sub-variant-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.sub-variant-name {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.sub-variant-status {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.status-tag {
+  font-size: 24rpx;
+  color: #999;
+  padding: 4rpx 12rpx;
+  background-color: #f0f0f0;
+  border-radius: 4rpx;
+}
+
+.status-tag.collected {
+  color: #4caf50;
+  background-color: #e8f5e9;
+}
+
+.image-count {
+  font-size: 24rpx;
+  color: #8B4513;
+}
+
+/* 操作按钮 */
+.sub-variant-actions {
+  display: flex;
+  gap: 12rpx;
+}
+
+.upload-btn-small {
+  flex: 1;
+  text-align: center;
+  padding: 12rpx;
+  background-color: #8B4513;
+  color: #fff;
+  border-radius: 6rpx;
+  font-size: 24rpx;
+}
+
+.view-images-btn {
+  flex: 1;
+  text-align: center;
+  padding: 12rpx;
+  background-color: #f0f0f0;
+  color: #333;
+  border-radius: 6rpx;
+  font-size: 24rpx;
+}

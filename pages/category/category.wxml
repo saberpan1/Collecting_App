@@ -1,0 +1,68 @@
+<!--分类页面 - 展示所有钱币分类-->
+<view class="container">
+  <!-- 分类列表 -->
+  <view wx:if="{{!selectedCategory}}">
+    <view class="page-title">钱币分类</view>
+    <view class="category-list">
+      <view 
+        class="category-item card" 
+        wx:for="{{categories}}" 
+        wx:key="id"
+        data-id="{{item.id}}"
+        bindtap="selectCategory"
+      >
+        <view class="category-header">
+          <view class="category-icon-large">💰</view>
+          <view class="category-info">
+            <text class="category-title">{{item.name}}</text>
+            <text class="category-desc">{{item.eras.length}} 个年代</text>
+          </view>
+          <view class="arrow-right">›</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 年代列表 -->
+  <view wx:elif="{{selectedCategory && !selectedEra}}">
+    <view class="nav-header">
+      <view class="back-btn" bindtap="backToCategories">
+        <text class="back-arrow">‹</text>
+        <text>返回</text>
+      </view>
+      <text class="nav-title">{{selectedCategory.name}}</text>
+    </view>
+    
+    <view class="era-list">
+      <view 
+        class="era-item card" 
+        wx:for="{{selectedCategory.eras}}" 
+        wx:key="id"
+        data-era-id="{{item.id}}"
+        data-era-name="{{item.name}}"
+        bindtap="goToVariants"
+      >
+        <view class="era-header">
+          <text class="era-title">{{item.name}}</text>
+          <text class="era-years">{{item.years}}</text>
+        </view>
+        <view class="era-arrow">查看详情 ›</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 版别列表 -->
+  <view wx:else>
+    <view class="nav-header">
+      <view class="back-btn" bindtap="backToCategories">
+        <text class="back-arrow">‹</text>
+        <text>返回</text>
+      </view>
+      <text class="nav-title">{{selectedEra.name}}</text>
+    </view>
+    
+    <view class="empty-state">
+      <text>请从上方选择年代查看版别</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,105 @@
+<!--统计页面 - 展示收藏统计数据-->
+<view class="container">
+  <view class="page-title">收藏统计</view>
+
+  <!-- 总体统计 -->
+  <view class="overview-card card">
+    <view class="stats-header">
+      <text class="stats-title">总体概况</text>
+    </view>
+    
+    <view class="stats-grid">
+      <view class="stat-box">
+        <view class="stat-value large">{{stats.collectedVariants}}</view>
+        <view class="stat-label">已收藏版别</view>
+      </view>
+      <view class="stat-box">
+        <view class="stat-value large">{{stats.totalVariants}}</view>
+        <view class="stat-label">总版别数</view>
+      </view>
+      <view class="stat-box">
+        <view class="stat-value">{{stats.totalImages}}</view>
+        <view class="stat-label">上传图片</view>
+      </view>
+      <view class="stat-box">
+        <view class="stat-value">{{stats.completionRate}}%</view>
+        <view class="stat-label">完成度</view>
+      </view>
+    </view>
+
+    <!-- 进度条 -->
+    <view class="progress-container">
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{stats.completionRate}}%"></view>
+      </view>
+      <text class="progress-text">已收藏 {{stats.collectedVariants}} / 总计 {{stats.totalVariants}}</text>
+    </view>
+  </view>
+
+  <!-- 按分类统计 -->
+  <view class="section-card card">
+    <text class="section-title">按分类统计</text>
+    <view class="category-stats">
+      <view 
+        class="category-stat-item" 
+        wx:for="{{categoryStats}}" 
+        wx:key="name"
+        data-type="category"
+        data-id="{{index + 1}}"
+        data-name="{{item.name}}"
+        bindtap="goToDetail"
+      >
+        <view class="category-stat-header">
+          <text class="category-stat-name">{{item.name}}</text>
+          <text class="category-stat-rate">{{item.rate}}%</text>
+        </view>
+        <view class="category-stat-bar">
+          <view class="category-stat-fill" style="width: {{item.rate}}%"></view>
+        </view>
+        <view class="category-stat-detail">
+          <text>已收藏 {{item.collected}} / {{item.total}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 按年代统计 -->
+  <view class="section-card card">
+    <text class="section-title">按年代统计</text>
+    <view class="era-stats">
+      <view class="era-stat-item" wx:for="{{eraStats}}" wx:key="eraName">
+        <view class="era-stat-header">
+          <view class="era-stat-info">
+            <text class="era-stat-name">{{item.eraName}}</text>
+            <text class="era-stat-category">{{item.categoryName}}</text>
+          </view>
+          <text class="era-stat-rate {{item.rate >= 50 ? 'high' : 'low'}}">{{item.rate}}%</text>
+        </view>
+        <view class="era-stat-detail">
+          <text>收藏：{{item.collected}} / {{item.total}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 最近活动 -->
+  <view class="section-card card" wx:if="{{recentActivity.length > 0}}">
+    <text class="section-title">最近收藏</text>
+    <view class="activity-list">
+      <view class="activity-item" wx:for="{{recentActivity}}" wx:key="id">
+        <image 
+          class="activity-image" 
+          src="{{item.images[0] || '/images/placeholder.png'}}" 
+          mode="aspectFill"
+        />
+        <view class="activity-info">
+          <text class="activity-name">{{item.name}}</text>
+          <text class="activity-date">{{item.date}}</text>
+        </view>
+        <view class="activity-count">
+          <text class="count-tag">📷 {{item.images.length}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
