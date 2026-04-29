@@ -1,0 +1,48 @@
+<!--自定义TabBar组件 - 精致图标设计-->
+<view class="tabbar">
+  <view
+    class="tabbar-item"
+    wx:for="{{list}}"
+    wx:key="index"
+    data-index="{{index}}"
+    bindtap="onTap"
+  >
+    <view class="tabbar-icon-wrap {{selected === index ? 'active' : ''}}">
+      <!-- 首页图标 - 古钱币收藏屋 -->
+      <view wx:if="{{item.pagePath === 'pages/index/index'}}" class="icon-wrapper">
+        <view class="coin-icon">
+          <view class="coin-outer"></view>
+          <view class="coin-inner"></view>
+          <view class="coin-square"></view>
+        </view>
+      </view>
+
+      <!-- 分类图标 - 典籍书架 -->
+      <view wx:elif="{{item.pagePath === 'pages/category/category'}}" class="icon-wrapper">
+        <view class="book-icon">
+          <view class="book-spine spine-1"></view>
+          <view class="book-spine spine-2"></view>
+          <view class="book-spine spine-3"></view>
+        </view>
+      </view>
+
+      <!-- 统计图标 - 数据仪表盘 -->
+      <view wx:elif="{{item.pagePath === 'pages/statistics/statistics'}}" class="icon-wrapper">
+        <view class="chart-icon">
+          <view class="chart-line line-1"></view>
+          <view class="chart-line line-2"></view>
+          <view class="chart-dot"></view>
+        </view>
+      </view>
+
+      <!-- 我的图标 - 印章 -->
+      <view wx:elif="{{item.pagePath === 'pages/mine/mine'}}" class="icon-wrapper">
+        <view class="seal-icon">
+          <view class="seal-outer"></view>
+          <view class="seal-inner"></view>
+        </view>
+      </view>
+    </view>
+    <text class="tabbar-text {{selected === index ? 'active' : ''}}">{{item.text}}</text>
+  </view>
+</view>

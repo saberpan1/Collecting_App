@@ -8,8 +8,16 @@ Page({
     stats: {
       totalVariants: 0,
       collectedVariants: 0,
-      totalImages: 0
-    }
+      totalImages: 0,
+      completionRate: 0
+    },
+    tabbarList: [
+      { pagePath: 'pages/index/index', text: '首页' },
+      { pagePath: 'pages/category/category', text: '分类' },
+      { pagePath: 'pages/statistics/statistics', text: '统计' },
+      { pagePath: 'pages/mine/mine', text: '我的' }
+    ],
+    selectedTabBar: 0
   },
 
   onLoad() {
@@ -17,6 +25,7 @@ Page({
   },
 
   onShow() {
+    this.setData({ selectedTabBar: 0 });
     this.loadData();
   },
 
@@ -32,6 +41,9 @@ Page({
     const totalVariants = this.countTotalVariants(variants);
     const collectedVariants = this.countCollectedVariants(variants);
     const totalImages = this.countTotalImages(variants);
+    const completionRate = totalVariants > 0 
+      ? Math.round(collectedVariants / totalVariants * 100) 
+      : 0;
 
     this.setData({
       categories: categories.slice(0, 4),
@@ -39,7 +51,8 @@ Page({
       stats: {
         totalVariants,
         collectedVariants,
-        totalImages
+        totalImages,
+        completionRate
       }
     });
   },
@@ -87,7 +100,7 @@ Page({
    * 跳转到分类页面
    */
   goToCategory() {
-    wx.switchTab({
+    wx.reLaunch({
       url: '/pages/category/category'
     });
   },
@@ -96,7 +109,7 @@ Page({
    * 跳转到统计页面
    */
   goToStatistics() {
-    wx.switchTab({
+    wx.reLaunch({
       url: '/pages/statistics/statistics'
     });
   },

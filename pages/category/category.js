@@ -5,10 +5,22 @@ Page({
   data: {
     categories: [],
     selectedCategory: null,
-    selectedEra: null
+    selectedEra: null,
+    tabbarList: [
+      { pagePath: 'pages/index/index', text: '首页' },
+      { pagePath: 'pages/category/category', text: '分类' },
+      { pagePath: 'pages/statistics/statistics', text: '统计' },
+      { pagePath: 'pages/mine/mine', text: '我的' }
+    ],
+    selectedTabBar: 1
   },
 
   onLoad() {
+    this.loadCategories();
+  },
+
+  onShow() {
+    this.setData({ selectedTabBar: 1 });
     this.loadCategories();
   },
 

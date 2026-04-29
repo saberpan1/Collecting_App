@@ -1,12 +1,16 @@
 /**
  * 古钱币收藏小程序 - 主入口文件
  */
+
+wx.cloud.init({
+  env: 'cloud1-d9ggzj1gu9463bcea'  // 替换为您的云环境ID
+});
+
 App({
   onLaunch() {
     // 初始化本地存储
     this.initStorage();
-  },
-
+  }, 
   /**
    * 初始化本地数据存储
    */

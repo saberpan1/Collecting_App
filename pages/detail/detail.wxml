@@ -1,90 +1,119 @@
-<!--详情页面 - 展示版别列表-->
-<view class="container">
-  <!-- 标题和筛选 -->
-  <view class="header-section">
-    <text class="page-title">{{title}}</text>
-    <view class="filter-bar">
-      <view 
-        class="filter-item {{filterType === 'all' ? 'active' : ''}}"
-        data-type="all"
-        bindtap="filterVariants"
+<!--收藏详情页-->
+<view class="page-container">
+  <!-- 图片轮播 -->
+  <view class="image-section">
+    <swiper
+      class="image-swiper"
+      indicator-dots="{{images.length > 1}}"
+      indicator-color="rgba(255,255,255,0.5)"
+      indicator-active-color="#ffffff"
+      autoplay="{{images.length > 1}}"
+      circular
+      bindchange="onImageChange"
+    >
+      <swiper-item
+        wx:for="{{images}}"
+        wx:key="index"
       >
-        全部
-      </view>
-      <view 
-        class="filter-item {{filterType === 'collected' ? 'active' : ''}}"
-        data-type="collected"
-        bindtap="filterVariants"
-      >
-        已收藏
-      </view>
-      <view 
-        class="filter-item {{filterType === 'uncollected' ? 'active' : ''}}"
-        data-type="uncollected"
-        bindtap="filterVariants"
-      >
-        未收藏
-      </view>
+        <view class="swiper-item-wrap" bindtap="previewImage" data-index="{{index}}">
+          <image
+            class="detail-image"
+            src="{{item.displayUrl}}"
+            mode="aspectFit"
+            lazy-load
+          />
+          <view class="image-loading" wx:if="{{!item.displayUrl}}">
+            <text>加载中...</text>
+          </view>
+        </view>
+      </swiper-item>
+    </swiper>
+
+    <!-- 图片指示器 -->
+    <view class="image-indicator" wx:if="{{images.length > 1}}">
+      <text>{{currentImageIndex + 1}} / {{images.length}}</text>
     </view>
   </view>
 
-  <!-- 版别列表 -->
-  <view class="variants-list" wx:if="{{filteredVariants.length > 0}}">
-    <view 
-      class="variant-group card" 
-      wx:for="{{filteredVariants}}" 
-      wx:key="id"
-    >
-      <view class="variant-header">
-        <text class="variant-name">{{item.name}}</text>
-        <text class="variant-era">{{item.eraName}}</text>
+  <!-- 信息区域 -->
+  <view class="info-section">
+    <!-- 物品名称 -->
+    <view class="name-section">
+      <text class="item-name">{{item.name || '未命名'}}</text>
+    </view>
+
+    <!-- 分类路径 -->
+    <view class="path-section" wx:if="{{item.categoryName || item.eraName || item.variantName}}">
+      <view class="path-tags">
+        <text class="path-tag" wx:if="{{item.categoryName}}">{{item.categoryName}}</text>
+        <text class="path-separator" wx:if="{{item.categoryName && item.eraName}}">·</text>
+        <text class="path-tag" wx:if="{{item.eraName}}">{{item.eraName}}</text>
+        <text class="path-separator" wx:if="{{item.eraName && item.variantName}}">·</text>
+        <text class="path-tag" wx:if="{{item.variantName}}">{{item.variantName}}</text>
       </view>
-      
-      <view class="sub-variants">
-        <view 
-          class="sub-variant-item" 
-          wx:for="{{item.subVariants}}" 
-          wx:key="id"
-          wx:for-item="sub"
-        >
-          <view class="sub-variant-info">
-            <text class="sub-variant-name">{{sub.name}}</text>
-            <view class="sub-variant-status">
-              <text class="status-tag {{sub.collected ? 'collected' : ''}}">
-                {{sub.collected ? '✓ 已收藏' : '○ 未收藏'}}
-              </text>
-              <text class="image-count" wx:if="{{sub.images && sub.images.length > 0}}">
-                📷 {{sub.images.length}}
-              </text>
-            </view>
-          </view>
-          
-          <view class="sub-variant-actions">
-            <view 
-              class="upload-btn-small" 
-              data-variant-id="{{sub.id}}"
-              data-variant-name="{{sub.name}}"
-              bindtap="goToUpload"
-            >
-              {{sub.collected ? '添加图片' : '收藏并上传'}}
-            </view>
-            
-            <view 
-              class="view-images-btn" 
-              wx:if="{{sub.images && sub.images.length > 0}}"
-              data-images="{{sub.images}}"
-              bindtap="previewImages"
-            >
-              查看图片
-            </view>
-          </view>
+    </view>
+
+    <!-- 详细信息卡片 -->
+    <view class="info-card">
+      <!-- 入手价格 -->
+      <view class="info-row" wx:if="{{item.price > 0}}">
+        <view class="info-icon-wrap price">
+          <text class="info-icon">¥</text>
+        </view>
+        <view class="info-content">
+          <text class="info-label">入手价格</text>
+          <text class="info-value price">¥{{item.price}}</text>
+        </view>
+      </view>
+
+      <!-- 上传日期 -->
+      <view class="info-row">
+        <view class="info-icon-wrap date">
+          <text class="info-icon">📅</text>
+        </view>
+        <view class="info-content">
+          <text class="info-label">上传日期</text>
+          <text class="info-value">{{item.date || '未知'}}</text>
+        </view>
+      </view>
+
+      <!-- 收藏时间 -->
+      <view class="info-row" wx:if="{{item.createTime}}">
+        <view class="info-icon-wrap time">
+          <text class="info-icon">🕐</text>
+        </view>
+        <view class="info-content">
+          <text class="info-label">收藏时间</text>
+          <text class="info-value">{{formatCreateTime}}</text>
+        </view>
+      </view>
+
+      <!-- 图片数量 -->
+      <view class="info-row">
+        <view class="info-icon-wrap images">
+          <text class="info-icon">🖼</text>
+        </view>
+        <view class="info-content">
+          <text class="info-label">图片数量</text>
+          <text class="info-value">{{images.length}} 张</text>
         </view>
       </view>
     </view>
-  </view>
 
-  <!-- 空状态 -->
-  <view class="empty-state" wx:else>
-    <text>暂无版别数据</text>
+    <!-- 备注 -->
+    <view class="note-card" wx:if="{{item.note}}">
+      <view class="note-header">
+        <text class="note-icon">📝</text>
+        <text class="note-title">备注说明</text>
+      </view>
+      <text class="note-content">{{item.note}}</text>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="action-section">
+      <button class="btn-delete" bindtap="deleteItem">
+        <text>删除收藏</text>
+      </button>
+    </view>
   </view>
 </view>

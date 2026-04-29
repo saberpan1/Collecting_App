@@ -1,101 +1,324 @@
-<!--上传页面 - 用户上传古钱币图片-->
-<view class="container">
-  <view class="page-title">上传藏品</view>
-  
-  <!-- 版别信息 -->
-  <view class="variant-info card">
-    <text class="variant-label">当前版别</text>
-    <text class="variant-name">{{variantName}}</text>
+<!--上传页-->
+<view class="page-container">
+  <!-- 顶部导航 -->
+  <view class="nav-bar">
+    <view class="nav-back" bindtap="goBack">
+      <text class="nav-back-icon">‹</text>
+    </view>
+    <text class="nav-title">上传藏品</text>
+    <view class="nav-placeholder"></view>
   </view>
 
-  <!-- 图片类型选择 -->
-  <view class="type-selector card">
-    <text class="section-title">图片类型</text>
-    <view class="type-options">
-      <view 
-        class="type-option {{imageType === 'front' ? 'active' : ''}}"
-        data-type="front"
-        bindtap="changeImageType"
-      >
-        正面
+  <!-- 步骤指示器 -->
+  <view class="steps-indicator">
+    <view class="step-item {{currentStep >= 1 ? 'active' : ''}}">
+      <view class="step-circle">
+        <text class="step-num" wx:if="{{currentStep <= 1}}">1</text>
+        <text class="step-check" wx:else>✓</text>
       </view>
-      <view 
-        class="type-option {{imageType === 'back' ? 'active' : ''}}"
-        data-type="back"
-        bindtap="changeImageType"
-      >
-        背面
+      <text class="step-label">选择版别</text>
+    </view>
+    <view class="step-line {{currentStep > 1 ? 'active' : ''}}"></view>
+    <view class="step-item {{currentStep >= 2 ? 'active' : ''}}">
+      <view class="step-circle">
+        <text class="step-num" wx:if="{{currentStep <= 2}}">2</text>
+        <text class="step-check" wx:else>✓</text>
       </view>
-      <view 
-        class="type-option {{imageType === 'other' ? 'active' : ''}}"
-        data-type="other"
-        bindtap="changeImageType"
-      >
-        其他
+      <text class="step-label">上传图片</text>
+    </view>
+    <view class="step-line {{currentStep > 2 ? 'active' : ''}}"></view>
+    <view class="step-item {{currentStep >= 3 ? 'active' : ''}}">
+      <view class="step-circle">
+        <text class="step-num">3</text>
       </view>
+      <text class="step-label">完成</text>
     </view>
   </view>
 
-  <!-- 图片列表 -->
-  <view class="upload-section card">
-    <text class="section-title">上传图片 ({{images.length}}/{{maxImages}})</text>
-    
-    <view class="image-grid">
-      <view 
-        class="image-item" 
-        wx:for="{{images}}" 
-        wx:key="createTime"
-      >
-        <image 
-          class="image-preview" 
-          src="{{item.url}}" 
-          mode="aspectFill"
-          data-index="{{index}}"
-          bindtap="previewImage"
-        />
-        <view class="image-type-tag">{{item.type === 'front' ? '正面' : item.type === 'back' ? '背面' : '其他'}}</view>
-        <view 
-          class="delete-btn" 
-          data-index="{{index}}"
-          bindtap="deleteImage"
-        >
-          ×
+  <!-- 步骤1: 选择版别 -->
+  <view class="step-content" wx:if="{{currentStep === 1}}">
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">选择分类</text>
+      </view>
+
+      <view class="selector-card">
+        <view class="selector-row" bindtap="openCategoryPicker">
+          <view class="selector-left">
+            <view class="selector-icon coin-icon">钱</view>
+            <view class="selector-info">
+              <text class="selector-label">分类</text>
+              <text class="selector-value {{selectedCategory ? '' : 'placeholder'}}">
+                {{selectedCategory ? selectedCategory.name : '请选择钱币分类'}}
+              </text>
+            </view>
+          </view>
+          <text class="selector-arrow">›</text>
+        </view>
+
+        <view class="selector-row {{selectedCategory ? '' : 'disabled'}}" bindtap="{{selectedCategory ? 'openEraPicker' : ''}}">
+          <view class="selector-left">
+            <view class="selector-icon era-icon">代</view>
+            <view class="selector-info">
+              <text class="selector-label">年代</text>
+              <text class="selector-value {{selectedEra ? '' : 'placeholder'}}">
+                {{selectedEra ? selectedEra.name : '请选择年代'}}
+              </text>
+            </view>
+          </view>
+          <text class="selector-arrow {{selectedCategory ? '' : 'disabled'}}">›</text>
+        </view>
+
+        <view class="selector-row {{selectedEra ? '' : 'disabled'}}" bindtap="{{selectedEra ? 'openVariantPicker' : ''}}">
+          <view class="selector-left">
+            <view class="selector-icon variant-icon">版</view>
+            <view class="selector-info">
+              <text class="selector-label">版别</text>
+              <text class="selector-value {{selectedVariant ? '' : 'placeholder'}}">
+                {{selectedVariant ? selectedVariant.name : '请选择版别'}}
+              </text>
+            </view>
+          </view>
+          <text class="selector-arrow {{selectedEra ? '' : 'disabled'}}">›</text>
         </view>
       </view>
-      
-      <!-- 添加图片按钮 -->
-      <view 
-        class="add-image-btn" 
-        wx:if="{{images.length < maxImages}}"
-        bindtap="chooseImage"
+    </view>
+
+    <view class="bottom-action">
+      <view class="action-hint" wx:if="{{!selectedVariant}}">
+        <text class="hint-icon">💡</text>
+        <text class="hint-text">请选择版别</text>
+      </view>
+      <button
+        class="btn-primary {{selectedVariant ? 'ready' : ''}}"
+        bindtap="{{selectedVariant ? 'goToStep2' : ''}}"
+        disabled="{{!selectedVariant}}"
       >
-        <text class="add-icon">+</text>
-        <text class="add-text">选择图片</text>
+        <text>下一步</text>
+        <text class="btn-arrow">›</text>
+      </button>
+    </view>
+  </view>
+
+  <!-- 步骤2: 上传图片 -->
+  <view class="step-content" wx:if="{{currentStep === 2}}">
+    <view class="selected-info-bar">
+      <view class="info-bar-icon">📦</view>
+      <text class="info-bar-text">{{selectedVariant.name}}</text>
+      <view class="info-bar-edit" bindtap="backToStep1">
+        <text>修改</text>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">上传图片</text>
+        <text class="image-counter">{{images.length}} / {{maxImages}}</text>
+      </view>
+
+      <view class="image-type-selector">
+        <view
+          class="type-btn {{imageType === 'front' ? 'active' : ''}}"
+          data-type="front"
+          bindtap="changeImageType"
+        >
+          <text class="type-icon">正</text>
+          <text class="type-label">正面</text>
+        </view>
+        <view
+          class="type-btn {{imageType === 'back' ? 'active' : ''}}"
+          data-type="back"
+          bindtap="changeImageType"
+        >
+          <text class="type-icon">背</text>
+          <text class="type-label">背面</text>
+        </view>
+        <view
+          class="type-btn {{imageType === 'detail' ? 'active' : ''}}"
+          data-type="detail"
+          bindtap="changeImageType"
+        >
+          <text class="type-icon">细</text>
+          <text class="type-label">细节</text>
+        </view>
+      </view>
+
+      <view class="image-grid-container">
+        <view class="image-grid">
+          <view
+            class="image-cell"
+            wx:for="{{images}}"
+            wx:key="id"
+          >
+            <image
+              class="image-preview"
+              src="{{item.url}}"
+              mode="aspectFill"
+              data-index="{{index}}"
+              bindtap="previewImage"
+            />
+            <view class="image-type-badge">
+              <text>{{getTypeName(item.type)}}</text>
+            </view>
+            <view class="image-delete" catchtap="deleteImage" data-index="{{index}}">
+              <text>×</text>
+            </view>
+          </view>
+
+          <view
+            class="add-image-cell"
+            wx:if="{{images.length < maxImages}}"
+            bindtap="chooseImage"
+          >
+            <view class="add-icon-wrap">
+              <view class="add-icon-h"></view>
+              <view class="add-icon-v"></view>
+            </view>
+            <text class="add-label">添加图片</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="upload-tips">
+        <text class="tip-text">建议上传正反两面图片，可获得更完整的收藏记录</text>
+      </view>
+    </view>
+
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">备注说明</text>
+        <text class="note-counter">{{note.length}}/200</text>
+      </view>
+      <view class="note-card">
+        <textarea
+          class="note-textarea"
+          placeholder="添加备注信息，如：品相、来源、收藏故事..."
+          value="{{note}}"
+          bindinput="onNoteInput"
+          maxlength="200"
+          cursor-spacing="20"
+        />
+      </view>
+    </view>
+
+    <!-- 入手价格 -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">入手价格</text>
+      </view>
+      <view class="price-card">
+        <view class="price-input-wrap">
+          <text class="price-symbol">¥</text>
+          <input
+            class="price-input"
+            type="digit"
+            placeholder="请输入入手价格"
+            value="{{price}}"
+            bindinput="onPriceInput"
+            cursor-spacing="10"
+          />
+        </view>
+        <text class="price-hint">选填，可帮助您统计收藏支出</text>
+      </view>
+    </view>
+
+    <view class="bottom-action">
+      <button class="btn-secondary" bindtap="backToStep1">
+        <text class="btn-arrow-back">‹</text>
+        <text>返回</text>
+      </button>
+      <button
+        class="btn-primary {{images.length > 0 ? 'ready' : ''}}"
+        bindtap="saveImages"
+        disabled="{{isUploading || images.length === 0}}"
+        loading="{{isUploading}}"
+      >
+        <text wx:if="{{!isUploading}}">保存藏品</text>
+        <text wx:else>保存中...</text>
+      </button>
+    </view>
+  </view>
+
+  <!-- 步骤3: 完成 -->
+  <view class="step-content success-page" wx:if="{{currentStep === 3}}">
+    <view class="success-container">
+      <view class="success-icon-wrap">
+        <view class="success-circle">
+          <text class="success-check">✓</text>
+        </view>
+      </view>
+      <text class="success-title">收藏成功</text>
+      <text class="success-subtitle">{{selectedVariant.name}} 已添加到您的收藏</text>
+
+      <view class="success-stats">
+        <view class="stat-item">
+          <text class="stat-value">{{images.length}}</text>
+          <text class="stat-label">张图片</text>
+        </view>
+        <view class="stat-divider"></view>
+        <view class="stat-item">
+          <text class="stat-value">1</text>
+          <text class="stat-label">个版别</text>
+        </view>
+      </view>
+
+      <view class="success-actions">
+        <button class="btn-primary" bindtap="goToHome">
+          <text>返回首页</text>
+        </button>
+        <button class="btn-secondary" bindtap="continueUpload">
+          <text>继续上传</text>
+        </button>
       </view>
     </view>
   </view>
 
-  <!-- 备注输入 -->
-  <view class="note-section card">
-    <text class="section-title">备注说明</text>
-    <textarea 
-      class="note-input"
-      placeholder="请输入备注信息（可选）"
-      value="{{note}}"
-      bindinput="onNoteInput"
-      maxlength="200"
-    />
-  </view>
+  <!-- 新建版别弹窗 -->
+  <view class="modal-mask {{showCreateModal ? 'show' : ''}}" catchtouchmove="preventTouchMove">
+    <view class="modal-container">
+      <view class="modal-header">
+        <text class="modal-title">创建新版别</text>
+        <view class="modal-close" bindtap="hideCreateVariant">
+          <text>×</text>
+        </view>
+      </view>
 
-  <!-- 保存按钮 -->
-  <view class="action-section">
-    <button 
-      class="save-btn" 
-      bindtap="saveImages"
-      loading="{{isUploading}}"
-      disabled="{{isUploading}}"
-    >
-      {{isUploading ? '保存中...' : '保存'}}
-    </button>
+      <view class="modal-body">
+        <view class="form-group">
+          <text class="form-label">版别名称</text>
+          <input
+            class="form-input"
+            placeholder="例如：乾隆通宝·常平式"
+            value="{{newVariantName}}"
+            bindinput="onNewVariantInput"
+            cursor-spacing="10"
+          />
+        </view>
+
+        <view class="form-group">
+          <text class="form-label">子版别（可多选）</text>
+          <view class="sub-variant-grid">
+            <view
+              class="sub-variant-chip {{newSubVariants.includes(item) ? 'selected' : ''}}"
+              wx:for="{{subVariantOptions}}"
+              wx:key="index"
+              data-value="{{item}}"
+              bindtap="toggleSubVariant"
+            >
+              <text>{{item}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="form-tips">
+          <text>选择常见的子版别类型，或在保存后手动添加更多</text>
+        </view>
+      </view>
+
+      <view class="modal-footer">
+        <button class="btn-modal-cancel" bindtap="hideCreateVariant">取消</button>
+        <button class="btn-modal-confirm {{newVariantName.trim() ? 'ready' : ''}}" bindtap="createNewVariant">创建</button>
+      </view>
+    </view>
   </view>
 </view>

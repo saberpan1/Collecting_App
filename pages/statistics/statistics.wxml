@@ -1,105 +1,218 @@
-<!--统计页面 - 展示收藏统计数据-->
-<view class="container">
-  <view class="page-title">收藏统计</view>
-
-  <!-- 总体统计 -->
-  <view class="overview-card card">
-    <view class="stats-header">
-      <text class="stats-title">总体概况</text>
-    </view>
-    
-    <view class="stats-grid">
-      <view class="stat-box">
-        <view class="stat-value large">{{stats.collectedVariants}}</view>
-        <view class="stat-label">已收藏版别</view>
-      </view>
-      <view class="stat-box">
-        <view class="stat-value large">{{stats.totalVariants}}</view>
-        <view class="stat-label">总版别数</view>
-      </view>
-      <view class="stat-box">
-        <view class="stat-value">{{stats.totalImages}}</view>
-        <view class="stat-label">上传图片</view>
-      </view>
-      <view class="stat-box">
-        <view class="stat-value">{{stats.completionRate}}%</view>
-        <view class="stat-label">完成度</view>
-      </view>
-    </view>
-
-    <!-- 进度条 -->
-    <view class="progress-container">
-      <view class="progress-bar">
-        <view class="progress-fill" style="width: {{stats.completionRate}}%"></view>
-      </view>
-      <text class="progress-text">已收藏 {{stats.collectedVariants}} / 总计 {{stats.totalVariants}}</text>
-    </view>
+<!--统计页 - 全面优化版-->
+<view class="page">
+  <!-- 导航栏 -->
+  <view class="navbar">
+    <view class="navbar-left"></view>
+    <text class="navbar-title">收藏统计</text>
+    <view class="navbar-right"></view>
   </view>
 
-  <!-- 按分类统计 -->
-  <view class="section-card card">
-    <text class="section-title">按分类统计</text>
-    <view class="category-stats">
-      <view 
-        class="category-stat-item" 
-        wx:for="{{categoryStats}}" 
-        wx:key="name"
-        data-type="category"
-        data-id="{{index + 1}}"
-        data-name="{{item.name}}"
-        bindtap="goToDetail"
-      >
-        <view class="category-stat-header">
-          <text class="category-stat-name">{{item.name}}</text>
-          <text class="category-stat-rate">{{item.rate}}%</text>
-        </view>
-        <view class="category-stat-bar">
-          <view class="category-stat-fill" style="width: {{item.rate}}%"></view>
-        </view>
-        <view class="category-stat-detail">
-          <text>已收藏 {{item.collected}} / {{item.total}}</text>
-        </view>
+  <!-- 内容区域 -->
+  <scroll-view
+    scroll-y
+    class="content"
+    enhanced
+    enable-back-to-top
+    refresher-enabled
+    bindrefresherrefresh="onRefresh"
+    refresher-triggered="{{refreshing}}"
+  >
+    <!-- 下拉刷新指示器 -->
+    <view slot="refresher" class="refresh-container">
+      <view class="refresh-animate" wx:if="{{refreshing}}">
+        <text class="refresh-icon">↻</text>
+        <text class="refresh-text">刷新中...</text>
       </view>
     </view>
-  </view>
 
-  <!-- 按年代统计 -->
-  <view class="section-card card">
-    <text class="section-title">按年代统计</text>
-    <view class="era-stats">
-      <view class="era-stat-item" wx:for="{{eraStats}}" wx:key="eraName">
-        <view class="era-stat-header">
-          <view class="era-stat-info">
-            <text class="era-stat-name">{{item.eraName}}</text>
-            <text class="era-stat-category">{{item.categoryName}}</text>
+    <!-- 总体概览卡片 -->
+    <view class="overview-card card fade-in">
+      <view class="overview-header">
+        <view class="overview-title-wrap">
+          <text class="overview-title">收藏概览</text>
+          <text class="overview-subtitle">更新于 {{lastUpdateTime}}</text>
+        </view>
+        <view class="refresh-btn" bindtap="refreshData">
+          <text class="refresh-icon-small">↻</text>
+        </view>
+      </view>
+
+      <!-- 大数字展示 -->
+      <view class="stats-display">
+        <view class="stats-main">
+          <text class="stats-big-value">{{stats.collectedVariants}}</text>
+          <text class="stats-big-label">已收藏版别</text>
+        </view>
+        <view class="stats-progress-ring">
+          <view class="ring-bg"></view>
+          <view class="ring-fill" style="--progress: {{stats.completionRate}}"></view>
+          <view class="ring-center">
+            <text class="ring-value">{{stats.completionRate}}%</text>
           </view>
-          <text class="era-stat-rate {{item.rate >= 50 ? 'high' : 'low'}}">{{item.rate}}%</text>
-        </view>
-        <view class="era-stat-detail">
-          <text>收藏：{{item.collected}} / {{item.total}}</text>
         </view>
       </view>
-    </view>
-  </view>
 
-  <!-- 最近活动 -->
-  <view class="section-card card" wx:if="{{recentActivity.length > 0}}">
-    <text class="section-title">最近收藏</text>
-    <view class="activity-list">
-      <view class="activity-item" wx:for="{{recentActivity}}" wx:key="id">
-        <image 
-          class="activity-image" 
-          src="{{item.images[0] || '/images/placeholder.png'}}" 
-          mode="aspectFill"
-        />
-        <view class="activity-info">
-          <text class="activity-name">{{item.name}}</text>
-          <text class="activity-date">{{item.date}}</text>
+      <!-- 进度条 -->
+      <view class="progress-section">
+        <view class="progress-header">
+          <text class="progress-label">完成进度</text>
+          <text class="progress-value">{{stats.collectedVariants}} / {{stats.totalVariants}}</text>
         </view>
-        <view class="activity-count">
-          <text class="count-tag">📷 {{item.images.length}}</text>
+        <view class="progress-track">
+          <view class="progress-fill" style="width: {{stats.completionRate}}%"></view>
+        </view>
+      </view>
+
+      <!-- 快速统计 -->
+      <view class="quick-stats">
+        <view class="quick-stat-item">
+          <text class="quick-stat-value">{{stats.totalVariants}}</text>
+          <text class="quick-stat-label">总版别</text>
+        </view>
+        <view class="quick-stat-divider"></view>
+        <view class="quick-stat-item">
+          <text class="quick-stat-value">{{stats.totalImages}}</text>
+          <text class="quick-stat-label">图片</text>
+        </view>
+        <view class="quick-stat-divider"></view>
+        <view class="quick-stat-item">
+          <text class="quick-stat-value">{{stats.totalVariants - stats.collectedVariants}}</text>
+          <text class="quick-stat-label">待收藏</text>
         </view>
       </view>
     </view>
-  </view>
+
+    <!-- 分类统计 -->
+    <view class="section fade-in">
+      <view class="section-header">
+        <text class="section-title">分类统计</text>
+        <view class="more-btn" bindtap="viewAllCategories">
+          <text>查看全部</text>
+          <text class="arrow">›</text>
+        </view>
+      </view>
+
+      <view class="category-grid">
+        <view
+          class="category-stat-card card"
+          wx:for="{{categoryStats}}"
+          wx:key="name"
+          data-category="{{item.name}}"
+          bindtap="viewCategoryDetail"
+          hover-class="card-hover"
+        >
+          <view class="category-stat-header">
+            <text class="category-stat-name">{{item.name}}</text>
+            <view class="category-stat-rate {{item.rate >= 50 ? 'high' : 'low'}}">
+              <text>{{item.rate}}%</text>
+            </view>
+          </view>
+
+          <view class="category-stat-bar">
+            <view class="bar-track">
+              <view class="bar-fill" style="width: {{item.rate}}%"></view>
+            </view>
+          </view>
+
+          <view class="category-stat-footer">
+            <text class="category-stat-count">{{item.collected}} / {{item.total}}</text>
+            <text class="category-stat-unit">个版别</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 年代统计 -->
+    <view class="section fade-in">
+      <view class="section-header">
+        <text class="section-title">年代统计</text>
+      </view>
+
+      <view class="era-list card">
+        <view
+          class="era-stat-item"
+          wx:for="{{eraStats}}"
+          wx:key="eraName"
+          data-era="{{item.eraName}}"
+          bindtap="viewEraDetail"
+          hover-class="item-hover"
+        >
+          <view class="era-stat-main">
+            <view class="era-stat-info">
+              <text class="era-stat-name">{{item.eraName}}</text>
+              <text class="era-stat-category">{{item.categoryName}}</text>
+            </view>
+            <view class="era-stat-badge {{item.rate >= 50 ? 'high' : 'low'}}">
+              <text>{{item.rate}}%</text>
+            </view>
+          </view>
+
+          <view class="era-stat-progress">
+            <view class="progress-track-small">
+              <view class="progress-fill-small" style="width: {{item.rate}}%"></view>
+            </view>
+          </view>
+
+          <view class="era-stat-footer">
+            <text class="era-stat-detail">已收藏 {{item.collected}} 个版别</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 最近活动 -->
+    <view class="section fade-in" wx:if="{{recentActivity.length > 0}}">
+      <view class="section-header">
+        <text class="section-title">最近收藏</text>
+        <view class="more-btn" bindtap="viewAllActivity">
+          <text>查看全部</text>
+          <text class="arrow">›</text>
+        </view>
+      </view>
+
+      <view class="activity-card card">
+        <view
+          class="activity-item"
+          wx:for="{{recentActivity}}"
+          wx:key="id"
+        >
+          <image
+            class="activity-image"
+            src="{{item.images[0] || ''}}"
+            mode="aspectFill"
+            lazy-load
+          />
+          <view class="activity-content">
+            <text class="activity-name">{{item.name}}</text>
+            <text class="activity-meta">{{item.date}}</text>
+          </view>
+          <view class="activity-badge">
+            <text class="badge-num">{{item.images.length}}</text>
+            <text class="badge-unit">张</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{hasMoreActivity}}" bindtap="loadMoreActivity">
+      <text class="load-more-text">加载更多</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:if="{{stats.totalVariants === 0}}">
+      <text class="empty-icon">📊</text>
+      <text class="empty-title">暂无收藏数据</text>
+      <text class="empty-text">开始收藏你的第一枚古钱币吧</text>
+      <view class="empty-action" bindtap="goToUpload">
+        <text>立即收藏</text>
+      </view>
+    </view>
+
+    <!-- 底部留白 -->
+    <view class="bottom-space"></view>
+  </scroll-view>
+
+  <!-- 自定义TabBar -->
+  <custom-tabbar list="{{tabbarList}}" selected="{{selectedTabBar}}" />
 </view>

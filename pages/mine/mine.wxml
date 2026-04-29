@@ -1,93 +1,132 @@
-<!--个人中心页面-->
-<view class="container">
-  <!-- 用户信息头部 -->
-  <view class="user-header card">
-    <view class="avatar">
-      <text class="avatar-icon">👤</text>
-    </view>
-    <view class="user-info">
-      <text class="username">古钱币收藏家</text>
-      <text class="user-desc">记录您的收藏历程</text>
-    </view>
+<!--个人中心 - 收藏展示版-->
+<view class="page-container">
+  <!-- 导航栏 -->
+  <view class="nav-bar">
+    <text class="nav-title">我的收藏</text>
   </view>
 
-  <!-- 统计卡片 -->
-  <view class="stats-card card">
-    <view class="stats-row">
-      <view class="stat-item">
-        <text class="stat-value">{{stats.totalCollected}}</text>
-        <text class="stat-label">收藏版别</text>
-      </view>
-      <view class="divider"></view>
-      <view class="stat-item">
-        <text class="stat-value">{{stats.totalImages}}</text>
-        <text class="stat-label">上传图片</text>
-      </view>
-      <view class="divider"></view>
-      <view class="stat-item">
-        <text class="stat-value">{{stats.totalCategories}}</text>
-        <text class="stat-label">分类数量</text>
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <view class="search-input-wrap">
+      <text class="search-icon">🔍</text>
+      <input
+        class="search-input"
+        placeholder="搜索钱币名称..."
+        value="{{searchKeyword}}"
+        bindinput="onSearchInput"
+        bindconfirm="onSearchConfirm"
+        confirm-type="search"
+      />
+      <view class="search-clear" wx:if="{{searchKeyword}}" bindtap="clearSearch">
+        <text>×</text>
       </view>
     </view>
   </view>
 
-  <!-- 我的收藏 -->
-  <view class="section-card card">
-    <view class="section-header">
-      <text class="section-title">我的收藏</text>
-      <text class="section-count">共 {{collection.length}} 个</text>
+  <!-- 搜索结果提示 -->
+  <view class="search-result-bar" wx:if="{{isSearching}}">
+    <text class="search-result-text">找到 {{searchResult.length}} 个相关结果</text>
+    <view class="search-exit" bindtap="exitSearch">
+      <text>退出搜索</text>
     </view>
+  </view>
 
-    <view class="collection-list" wx:if="{{collection.length > 0}}">
-      <view class="collection-item" wx:for="{{collection}}" wx:key="id">
-        <view class="collection-left">
-          <image 
-            class="collection-image" 
-            src="{{item.images[0] || '/images/placeholder.png'}}" 
-            mode="aspectFill"
-            data-images="{{item.images}}"
-            bindtap="previewImage"
-          />
-          <view class="collection-info">
-            <text class="collection-name">{{item.name}}</text>
-            <text class="collection-date">{{item.date}}</text>
-            <text class="collection-image-count">📷 {{item.images.length}} 张</text>
+  <!-- 统计数据 -->
+  <view class="stats-bar">
+    <view class="stat-item">
+      <text class="stat-value">{{stats.totalCollected}}</text>
+      <text class="stat-label">收藏版别</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <text class="stat-value">{{stats.totalImages}}</text>
+      <text class="stat-label">图片数量</text>
+    </view>
+    <view class="stat-divider"></view>
+    <view class="stat-item">
+      <text class="stat-value">¥{{stats.totalValue}}</text>
+      <text class="stat-label">收藏总价</text>
+    </view>
+  </view>
+
+  <!-- 下拉刷新 -->
+  <scroll-view
+    scroll-y
+    class="scroll-content"
+    refresher-enabled
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onRefresh"
+  >
+    <!-- 收藏列表 -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">{{isSearching ? '搜索结果' : '全部收藏'}}</text>
+        <text class="section-count">{{displayList.length}} 个版别</text>
+      </view>
+
+      <!-- 瀑布流网格 -->
+      <view class="collection-grid" wx:if="{{displayList.length > 0}}">
+        <view
+          class="collection-card {{isSearching ? 'search-mode' : ''}}"
+          wx:for="{{displayList}}"
+          wx:key="_id"
+          data-id="{{item._id}}"
+          bindtap="onCardTap"
+        >
+          <!-- 图片 -->
+          <view class="card-image-wrap">
+            <image
+              class="card-image"
+              src="{{item.displayUrl}}"
+              mode="aspectFill"
+              lazy-load
+            />
+            <view class="image-placeholder" wx:if="{{!item.displayUrl}}">
+              <text>📷</text>
+            </view>
+            <!-- 图片数量 -->
+            <view class="image-count" wx:if="{{item.images && item.images.length > 1}}">
+              <text>{{item.images.length}}</text>
+            </view>
           </view>
-        </view>
-        <view class="collection-actions">
-          <view 
-            class="action-btn delete"
-            data-id="{{item.id}}"
-            bindtap="deleteCollection"
+
+          <!-- 信息 -->
+          <view class="card-info">
+            <text class="card-name">{{item.name}}</text>
+            <view class="card-meta">
+              <text class="card-date">{{item.date}}</text>
+              <text class="card-price" wx:if="{{item.price > 0}}">¥{{item.price}}</text>
+            </view>
+          </view>
+
+          <!-- 删除按钮 -->
+          <view
+            class="card-delete"
+            catchtap="deleteCollection"
+            data-id="{{item._id}}"
           >
-            删除
+            <text>×</text>
           </view>
         </view>
       </view>
+
+      <!-- 空状态 -->
+      <view class="empty-state" wx:else>
+        <view class="empty-icon-wrap">
+          <text class="empty-icon">{{isSearching ? '🔍' : '📭'}}</text>
+        </view>
+        <text class="empty-title">{{isSearching ? '未找到相关收藏' : '暂无收藏记录'}}</text>
+        <text class="empty-desc">{{isSearching ? '换个关键词试试吧' : '快去上传您的第一枚古钱币吧'}}</text>
+        <button class="btn-start" wx:if="{{!isSearching}}" bindtap="goToUpload">
+          <text>开始上传</text>
+        </button>
+      </view>
     </view>
 
-    <view class="empty-state" wx:else>
-      <text class="empty-icon">📭</text>
-      <text class="empty-text">暂无收藏</text>
-    </view>
-  </view>
+    <!-- 底部留白 -->
+    <view class="bottom-space"></view>
+  </scroll-view>
 
-  <!-- 功能菜单 -->
-  <view class="menu-card card">
-    <view class="menu-item" bindtap="exportData">
-      <text class="menu-icon">📤</text>
-      <text class="menu-text">导出数据</text>
-      <text class="menu-arrow">›</text>
-    </view>
-    <view class="menu-item" bindtap="showAbout">
-      <text class="menu-icon">ℹ️</text>
-      <text class="menu-text">关于</text>
-      <text class="menu-arrow">›</text>
-    </view>
-    <view class="menu-item danger" bindtap="clearAllData">
-      <text class="menu-icon">🗑️</text>
-      <text class="menu-text">清空所有数据</text>
-      <text class="menu-arrow">›</text>
-    </view>
-  </view>
+  <!-- 自定义TabBar -->
+  <custom-tabbar list="{{tabbarList}}" selected="{{selectedTabBar}}" />
 </view>

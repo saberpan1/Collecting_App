@@ -1,56 +1,374 @@
 /**
- * 上传页面 - 用户上传古钱币图片
+ * 上传页 - 全面UI优化版
  */
 Page({
   data: {
-    variantId: '',
-    variantName: '',
+    // 步骤状态
+    currentStep: 1,
+
+    // 版别选择相关
+    categories: [],
+    selectedCategory: null,
+    selectedEra: null,
+    selectedVariant: null,
+    categoryIndex: -1,
+    eraIndex: -1,
+    variantIndex: -1,
+    variants: [],
+
+    // 图片上传相关
     images: [],
     maxImages: 9,
+    imageType: 'front',
+    note: '',
+    price: '',
     isUploading: false,
-    imageType: 'front', // front, back, other
-    note: ''
+
+    // 新建版别相关
+    showCreateModal: false,
+    newVariantName: '',
+    newSubVariants: ['小平', '折二', '折三', '当十'],
+    subVariantOptions: ['小平', '折二', '折三', '当十', '折五', '折十', '大样', '小样'],
+    isCreatingVariant: false
   },
 
   onLoad(options) {
-    const { variantId, variantName } = options;
-    
-    if (variantId) {
-      // 加载已有图片
-      const variants = wx.getStorageSync('coinVariants') || [];
-      const variant = this.findVariantById(variants, parseInt(variantId));
-      
-      if (variant) {
-        this.setData({
-          variantId: variantId,
-          variantName: decodeURIComponent(variantName || variant.name),
-          images: variant.images || []
+    this.loadCategories();
+
+    if (options.eraId) {
+      this.autoSelectFromParams(options);
+    }
+  },
+
+  onShow() {
+    // 页面显示时，刷新云存储图片的访问链接
+    this.refreshCloudImageUrls();
+  },
+
+  /**
+   * 刷新云存储图片的访问链接
+   * cloud:// 格式需要转换为临时下载链接才能显示
+   */
+  refreshCloudImageUrls() {
+    const { images } = this.data;
+    if (!images || images.length === 0) return;
+
+    const hasCloudImage = images.some(img => img.url && img.url.startsWith('cloud://'));
+    if (!hasCloudImage) return;
+
+    // 获取云存储临时链接
+    const cloudPaths = images
+      .filter(img => img.url && img.url.startsWith('cloud://'))
+      .map(img => img.url);
+
+    wx.cloud.getTempFileURL({
+      fileList: cloudPaths,
+      success: (res) => {
+        const urlMap = {};
+        res.fileList.forEach(file => {
+          urlMap[file.fileID] = file.tempFileURL;
         });
-      } else {
-        this.setData({
-          variantId: variantId,
-          variantName: decodeURIComponent(variantName || '未知版别')
+
+        // 更新图片URL
+        const updatedImages = images.map(img => {
+          if (img.url && urlMap[img.url]) {
+            return { ...img, url: urlMap[img.url] };
+          }
+          return img;
         });
+
+        this.setData({ images: updatedImages });
+      },
+      fail: (err) => {
+        console.error('获取云存储链接失败:', err);
+      }
+    });
+  },
+
+  /**
+   * 加载分类数据
+   */
+  loadCategories() {
+    const categories = wx.getStorageSync('coinCategories') || [];
+    this.setData({ categories });
+  },
+
+  /**
+   * 根据参数自动选择
+   */
+  autoSelectFromParams(options) {
+    const categories = wx.getStorageSync('coinCategories') || [];
+    const variants = wx.getStorageSync('coinVariants') || [];
+    const eraId = parseInt(options.eraId);
+
+    for (let i = 0; i < categories.length; i++) {
+      const category = categories[i];
+      const era = category.eras.find(e => e.id === eraId);
+
+      if (era) {
+        const eraVariants = variants.filter(v => v.eraId === eraId);
+
+        this.setData({
+          categoryIndex: i,
+          selectedCategory: category,
+          selectedEra: era,
+          variants: eraVariants
+        });
+
+        if (options.variantId) {
+          const variantId = parseInt(options.variantId);
+          const variantIndex = eraVariants.findIndex(v => v.id === variantId);
+
+          if (variantIndex >= 0) {
+            this.setData({
+              variantIndex: variantIndex,
+              selectedVariant: eraVariants[variantIndex]
+            });
+          }
+        }
+        break;
       }
     }
   },
 
   /**
-   * 递归查找版别
+   * 打开分类选择器
    */
-  findVariantById(variants, id) {
-    for (let variant of variants) {
-      if (variant.id === id) {
-        return variant;
-      }
-      if (variant.subVariants) {
-        const found = variant.subVariants.find(sv => sv.id === id);
-        if (found) {
-          return found;
-        }
-      }
+  openCategoryPicker() {
+    const { categories } = this.data;
+    if (!categories || categories.length === 0) {
+      wx.showToast({ title: '暂无分类数据', icon: 'none' });
+      return;
     }
-    return null;
+
+    wx.showActionSheet({
+      itemList: categories.map(c => c.name),
+      success: (res) => {
+        this.onCategoryChange({ detail: { value: res.tapIndex } });
+      }
+    });
+  },
+
+  /**
+   * 打开年代选择器
+   */
+  openEraPicker() {
+    const { selectedCategory } = this.data;
+    if (!selectedCategory || !selectedCategory.eras) {
+      wx.showToast({ title: '请先选择分类', icon: 'none' });
+      return;
+    }
+
+    wx.showActionSheet({
+      itemList: selectedCategory.eras.map(e => e.name),
+      success: (res) => {
+        this.onEraChange({ detail: { value: res.tapIndex } });
+      }
+    });
+  },
+
+  /**
+   * 打开版别选择器
+   */
+  openVariantPicker() {
+    const { variants } = this.data;
+    if (!variants || variants.length === 0) {
+      wx.showToast({ title: '该年代下暂无版别', icon: 'none' });
+      return;
+    }
+
+    wx.showActionSheet({
+      itemList: variants.map(v => v.name),
+      success: (res) => {
+        this.onVariantChange({ detail: { value: res.tapIndex } });
+      }
+    });
+  },
+
+  /**
+   * 打开子版别选择器
+   */
+  openSubVariantPicker() {
+    const { selectedVariant } = this.data;
+    if (!selectedVariant || !selectedVariant.subVariants) {
+      wx.showToast({ title: '请先选择版别', icon: 'none' });
+      return;
+    }
+
+    wx.showActionSheet({
+      itemList: selectedVariant.subVariants.map(s => s.name),
+      success: (res) => {
+        this.onSubVariantChange({ detail: { value: res.tapIndex } });
+      }
+    });
+  },
+
+  /**
+   * 分类选择变化
+   */
+  onCategoryChange(e) {
+    const index = e.detail.value;
+    const category = this.data.categories[index];
+    const variants = [];
+
+    this.setData({
+      categoryIndex: index,
+      selectedCategory: category,
+      selectedEra: null,
+      selectedVariant: null,
+      eraIndex: -1,
+      variantIndex: -1,
+      variants: variants
+    });
+  },
+
+  /**
+   * 年代选择变化
+   */
+  onEraChange(e) {
+    const index = e.detail.value;
+    const era = this.data.selectedCategory.eras[index];
+    const variants = this.getVariantsByEra(era.id);
+
+    this.setData({
+      eraIndex: index,
+      selectedEra: era,
+      selectedVariant: null,
+      variantIndex: -1,
+      variants: variants
+    });
+  },
+
+  /**
+   * 版别选择变化
+   */
+  onVariantChange(e) {
+    const index = e.detail.value;
+    const variant = this.data.variants[index];
+
+    this.setData({
+      variantIndex: index,
+      selectedVariant: variant
+    });
+  },
+
+  /**
+   * 根据年代获取版别
+   */
+  getVariantsByEra(eraId) {
+    const allVariants = wx.getStorageSync('coinVariants') || [];
+    return allVariants.filter(v => v.eraId === eraId);
+  },
+
+  /**
+   * 显示新建版别弹窗
+   */
+  showCreateVariant() {
+    this.setData({
+      showCreateModal: true,
+      newVariantName: '',
+      newSubVariants: ['小平', '折二', '折三', '当十']
+    });
+  },
+
+  /**
+   * 隐藏新建版别弹窗
+   */
+  hideCreateVariant() {
+    this.setData({
+      showCreateModal: false
+    });
+  },
+
+  /**
+   * 输入新版别名称
+   */
+  onNewVariantInput(e) {
+    this.setData({
+      newVariantName: e.detail.value
+    });
+  },
+
+  /**
+   * 切换子版别
+   */
+  toggleSubVariant(e) {
+    const { value } = e.currentTarget.dataset;
+    let newSubVariants = [...this.data.newSubVariants];
+
+    if (newSubVariants.includes(value)) {
+      newSubVariants = newSubVariants.filter(v => v !== value);
+    } else {
+      newSubVariants.push(value);
+    }
+
+    this.setData({
+      newSubVariants: newSubVariants
+    });
+  },
+
+  /**
+   * 创建新版别
+   */
+  createNewVariant() {
+    const { newVariantName, newSubVariants, selectedEra } = this.data;
+
+    if (!newVariantName.trim()) {
+      wx.showToast({ title: '请输入版别名称', icon: 'none' });
+      return;
+    }
+
+    if (newSubVariants.length === 0) {
+      wx.showToast({ title: '请至少选择一个子版别', icon: 'none' });
+      return;
+    }
+
+    const allVariants = wx.getStorageSync('coinVariants') || [];
+    const maxId = allVariants.reduce((max, v) => Math.max(max, v.id), 0);
+
+    const newVariant = {
+      id: maxId + 1,
+      eraId: selectedEra.id,
+      eraName: selectedEra.name,
+      name: newVariantName,
+      subVariants: newSubVariants.map((subName, index) => ({
+        id: (maxId + 1) * 100 + index + 1,
+        name: `${newVariantName} - ${subName}`,
+        collected: false,
+        images: []
+      })),
+      collected: false,
+      images: []
+    };
+
+    allVariants.push(newVariant);
+    wx.setStorageSync('coinVariants', allVariants);
+
+    const variants = this.getVariantsByEra(selectedEra.id);
+    const variantIndex = variants.findIndex(v => v.id === newVariant.id);
+
+    this.setData({
+      variants: variants,
+      variantIndex: variantIndex,
+      selectedVariant: newVariant,
+      showCreateModal: false,
+      isCreatingVariant: false
+    });
+
+    wx.showToast({ title: '创建成功', icon: 'success' });
+  },
+
+  /**
+   * 获取图片类型名称
+   */
+  getTypeName(type) {
+    const typeMap = {
+      'front': '正面',
+      'back': '背面',
+      'detail': '细节',
+      'other': '其他'
+    };
+    return typeMap[type] || '图片';
   },
 
   /**
@@ -59,12 +377,9 @@ Page({
   chooseImage() {
     const that = this;
     const remaining = this.data.maxImages - this.data.images.length;
-    
+
     if (remaining <= 0) {
-      wx.showToast({
-        title: '最多上传 9 张图片',
-        icon: 'none'
-      });
+      wx.showToast({ title: '最多上传 9 张图片', icon: 'none' });
       return;
     }
 
@@ -75,11 +390,14 @@ Page({
       sizeType: ['compressed'],
       success(res) {
         const tempFiles = res.tempFiles;
-        const newImages = tempFiles.map(file => ({
+        const newImages = tempFiles.map((file, index) => ({
+          id: new Date().getTime() + index,
           url: file.tempFilePath || file.tempFileID,
           type: that.data.imageType,
           note: that.data.note,
-          createTime: new Date().getTime()
+          createTime: new Date().getTime(),
+          uploading: false,
+          error: false
         }));
 
         that.setData({
@@ -95,7 +413,7 @@ Page({
   previewImage(e) {
     const { index } = e.currentTarget.dataset;
     const urls = this.data.images.map(img => img.url);
-    
+
     wx.previewImage({
       current: urls[index],
       urls: urls
@@ -109,7 +427,7 @@ Page({
     const { index } = e.currentTarget.dataset;
     const images = [...this.data.images];
     images.splice(index, 1);
-    
+
     this.setData({
       images: images
     });
@@ -135,39 +453,164 @@ Page({
   },
 
   /**
-   * 保存图片
+   * 输入入手价格
+   */
+  onPriceInput(e) {
+    this.setData({
+      price: e.detail.value
+    });
+  },
+
+  /**
+   * 步骤导航
+   */
+  goToStep2() {
+    if (!this.data.selectedVariant) {
+      wx.showToast({ title: '请先选择版别', icon: 'none' });
+      return;
+    }
+    this.setData({ currentStep: 2 });
+  },
+
+  backToStep1() {
+    this.setData({ currentStep: 1 });
+  },
+
+  goToStep3() {
+    this.setData({ currentStep: 3 });
+  },
+
+  /**
+   * 保存图片（上传到云存储）
    */
   saveImages() {
     if (this.data.images.length === 0) {
-      wx.showToast({
-        title: '请选择图片',
-        icon: 'none'
-      });
+      wx.showToast({ title: '请选择图片', icon: 'none' });
       return;
     }
 
-    this.setData({
-      isUploading: true
-    });
+    this.setData({ isUploading: true });
 
-    // 模拟上传延迟
-    setTimeout(() => {
-      this.updateVariantData();
-      
-      wx.showToast({
-        title: '保存成功',
-        icon: 'success'
-      });
+    const cloudImages = [];
+    let completed = 0;
+
+    this.data.images.forEach((img, index) => {
+      // 检查是否是临时文件，需要上传到云
+      const isTempFile = img.url && (img.url.startsWith('http://tmp') || img.url.startsWith('wxfile://'));
+
+      if (isTempFile) {
+        // 上传到云存储
+        const cloudPath = `coins/${Date.now()}_${index}.jpg`;
+
+        wx.cloud.uploadFile({
+          cloudPath: cloudPath,
+          filePath: img.url,
+          success: (res) => {
+            cloudImages.push({
+              id: img.id,
+              url: res.fileID,  // 云存储ID，格式为 cloud://xxx
+              type: img.type,
+              note: img.note,
+              createTime: img.createTime
+            });
+            completed++;
+            this.checkSaveComplete(cloudImages, completed);
+          },
+          fail: (err) => {
+            console.error('上传云存储失败:', err);
+            wx.showToast({ title: '上传失败，请重试', icon: 'none' });
+            this.setData({ isUploading: false });
+          }
+        });
+      } else {
+        // 已经是云存储ID或持久路径
+        cloudImages.push(img);
+        completed++;
+        this.checkSaveComplete(cloudImages, completed);
+      }
+    });
+  },
+
+  /**
+   * 检查是否全部保存完成
+   */
+  checkSaveComplete(cloudImages, completed) {
+    if (completed === this.data.images.length) {
+      this.data.images = cloudImages;
+
+      // 保存到云数据库
+      this.saveToCloudDatabase();
 
       this.setData({
-        isUploading: false
+        isUploading: false,
+        currentStep: 3
       });
+      wx.showToast({ title: '保存成功', icon: 'success' });
+    }
+  },
 
-      // 延迟返回
-      setTimeout(() => {
-        wx.navigateBack();
-      }, 1500);
-    }, 500);
+  /**
+   * 保存到云数据库
+   */
+  saveToCloudDatabase() {
+    const db = wx.cloud.database();
+    const { selectedVariant, images, selectedCategory, selectedEra, price, note } = this.data;
+
+    // 构建藏品数据
+    const collectionData = {
+      variantId: selectedVariant.id,
+      name: selectedVariant.name,
+      images: images.map(img => ({
+        fileID: img.url,
+        type: img.type,
+        note: img.note || '',
+        createTime: img.createTime || Date.now()
+      })),
+      categoryName: selectedCategory?.name || '',
+      eraName: selectedEra?.name || '',
+      variantName: selectedVariant?.name || '',
+      date: this.formatDate(new Date()),
+      price: price || 0,
+      note: note || '',
+      createTime: db.serverDate()
+    };
+
+    // 添加到云数据库
+    db.collection('collections').add({
+      data: collectionData,
+      success: (res) => {
+        console.log('藏品已存入云数据库', res);
+        // 同时更新本地存储
+        this.updateVariantData();
+        // 重置表单
+        this.resetForm();
+      },
+      fail: (err) => {
+        console.error('存入云数据库失败:', err);
+        // 即使云数据库失败，也保存到本地
+        this.updateVariantData();
+        this.resetForm();
+      }
+    });
+  },
+
+  /**
+   * 重置表单
+   */
+  resetForm() {
+    this.setData({
+      images: [],
+      note: '',
+      price: '',
+      currentStep: 1,
+      selectedCategory: null,
+      selectedEra: null,
+      selectedVariant: null,
+      categoryIndex: -1,
+      eraIndex: -1,
+      variantIndex: -1,
+      variants: []
+    });
   },
 
   /**
@@ -175,28 +618,18 @@ Page({
    */
   updateVariantData() {
     const variants = wx.getStorageSync('coinVariants') || [];
-    const variantId = parseInt(this.data.variantId);
-    
-    // 查找并更新版别
-    const updateVariant = (list) => {
-      for (let variant of list) {
-        if (variant.id === variantId) {
-          variant.collected = true;
-          variant.images = this.data.images;
-          return true;
-        }
-        if (variant.subVariants) {
-          const found = updateVariant(variant.subVariants);
-          if (found) return true;
-        }
-      }
-      return false;
-    };
+    const variantId = this.data.selectedVariant.id;
 
-    updateVariant(variants);
+    for (let variant of variants) {
+      if (variant.id === variantId) {
+        variant.collected = true;
+        variant.images = this.data.images;
+        break;
+      }
+    }
+
     wx.setStorageSync('coinVariants', variants);
 
-    // 同时更新用户收藏记录
     this.updateUserCollection(variantId);
   },
 
@@ -205,27 +638,30 @@ Page({
    */
   updateUserCollection(variantId) {
     let collection = wx.getStorageSync('userCollection') || [];
-    
-    // 检查是否已存在
+    const { selectedVariant } = this.data;
+
     const exists = collection.find(item => item.id === variantId);
-    
+
     if (!exists) {
       const newCollection = {
         id: variantId,
-        name: this.data.variantName,
+        name: selectedVariant.name,
         images: this.data.images,
-        date: this.formatDate(new Date())
+        date: this.formatDate(new Date()),
+        category: this.data.selectedCategory?.name,
+        era: this.data.selectedEra?.name,
+        variant: selectedVariant.name
       };
-      
+
       collection.unshift(newCollection);
       wx.setStorageSync('userCollection', collection);
     } else {
-      // 更新已有记录
       collection = collection.map(item => {
-        if (item.id === variantId) {
+        if (item.id === subVariantId) {
           return {
             ...item,
-            images: this.data.images
+            images: this.data.images,
+            date: this.formatDate(new Date())
           };
         }
         return item;
@@ -241,7 +677,43 @@ Page({
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
-    
     return `${year}-${month}-${day}`;
+  },
+
+  /**
+   * 完成页操作
+   */
+  goToHome() {
+    wx.reLaunch({ url: '/pages/index/index' });
+  },
+
+  continueUpload() {
+    this.setData({
+      currentStep: 1,
+      images: [],
+      note: '',
+      selectedCategory: null,
+      selectedEra: null,
+      selectedVariant: null,
+      categoryIndex: -1,
+      eraIndex: -1,
+      variantIndex: -1,
+      variants: []
+    });
+    this.loadCategories();
+  },
+
+  /**
+   * 返回上一页
+   */
+  goBack() {
+    wx.navigateBack();
+  },
+
+  /**
+   * 阻止触摸移动
+   */
+  preventTouchMove() {
+    return false;
   }
 });

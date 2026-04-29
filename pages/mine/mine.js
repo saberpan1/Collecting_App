@@ -1,78 +1,171 @@
 /**
- * 个人中心页面
+ * 个人中心 - 简化调试版
  */
 Page({
   data: {
     stats: {
       totalCollected: 0,
       totalImages: 0,
-      totalCategories: 0
+      totalValue: 0
     },
     collection: [],
-    showClearConfirm: false
+    displayList: [],
+    searchKeyword: '',
+    searchResult: [],
+    isSearching: false,
+    refreshing: false,
+    tabbarList: [
+      { pagePath: 'pages/index/index', text: '首页' },
+      { pagePath: 'pages/category/category', text: '分类' },
+      { pagePath: 'pages/statistics/statistics', text: '统计' },
+      { pagePath: 'pages/mine/mine', text: '我的' }
+    ],
+    selectedTabBar: 3
   },
 
   onShow() {
+    console.log('onShow 被调用');
+    this.setData({ selectedTabBar: 3 });
     this.loadData();
   },
 
   /**
-   * 加载页面数据
+   * 加载数据
    */
   loadData() {
-    const collection = wx.getStorageSync('userCollection') || [];
-    const variants = wx.getStorageSync('coinVariants') || [];
-    const categories = wx.getStorageSync('coinCategories') || [];
+    console.log('loadData 被调用');
+    // 先从本地存储加载，确保页面能显示
+    this.loadFromLocalStorage();
+  },
 
-    // 统计数据
-    const totalCollected = collection.length;
-    const totalImages = this.countTotalImages(variants);
+  /**
+   * 从本地存储加载
+   */
+  loadFromLocalStorage() {
+    console.log('从本地存储加载...');
+    const collection = wx.getStorageSync('userCollection') || [];
+    console.log('本地数据:', collection);
+
+    let totalImages = 0;
+    let totalValue = 0;
+
+    collection.forEach(item => {
+      if (item.images) {
+        totalImages += item.images.length;
+      }
+      if (item.price) {
+        totalValue += parseFloat(item.price);
+      }
+    });
+
+    const displayList = collection.map(item => {
+      let displayUrl = '';
+      if (item.images && item.images.length > 0) {
+        displayUrl = item.images[0].url || item.images[0] || '';
+      }
+      return {
+        ...item,
+        _id: item.id || item._id || Date.now(),
+        displayUrl: displayUrl
+      };
+    });
+
+    console.log('displayList:', displayList);
 
     this.setData({
+      collection: collection,
+      displayList: displayList,
       stats: {
-        totalCollected,
-        totalImages,
-        totalCategories: categories.length
-      },
-      collection: collection
+        totalCollected: collection.length,
+        totalImages: totalImages,
+        totalValue: totalValue.toFixed(2)
+      }
     });
+
+    console.log('数据设置完成');
   },
 
   /**
-   * 统计总图片数
+   * 下拉刷新
    */
-  countTotalImages(variants) {
-    let count = 0;
-    variants.forEach(variant => {
-      variant.subVariants.forEach(sub => {
-        count += (sub.images || []).length;
+  onRefresh() {
+    console.log('下拉刷新');
+    this.setData({ refreshing: true });
+    this.loadData();
+    setTimeout(() => {
+      this.setData({ refreshing: false });
+    }, 500);
+  },
+
+  /**
+   * 搜索输入
+   */
+  onSearchInput(e) {
+    const keyword = e.detail.value.trim();
+    console.log('搜索:', keyword);
+    this.setData({ searchKeyword: keyword });
+
+    if (keyword) {
+      const results = this.data.collection.filter(item => {
+        const name = (item.name || '').toLowerCase();
+        return name.includes(keyword.toLowerCase());
       });
-    });
-    return count;
-  },
 
-  /**
-   * 查看收藏详情
-   */
-  viewCollection(e) {
-    const { id } = e.currentTarget.dataset;
-    wx.navigateTo({
-      url: `/pages/detail/detail?variantId=${id}`
-    });
-  },
+      const searchResult = results.map(item => {
+        let displayUrl = '';
+        if (item.images && item.images.length > 0) {
+          displayUrl = item.images[0].url || item.images[0] || '';
+        }
+        return {
+          ...item,
+          _id: item.id || item._id || Date.now(),
+          displayUrl: displayUrl
+        };
+      });
 
-  /**
-   * 预览图片
-   */
-  previewImage(e) {
-    const { images } = e.currentTarget.dataset;
-    
-    if (images && images.length > 0) {
-      wx.previewImage({
-        current: images[0],
-        urls: images
+      this.setData({
+        isSearching: true,
+        searchResult: searchResult,
+        displayList: searchResult
+      });
+    } else {
+      this.setData({
+        isSearching: false,
+        searchResult: [],
+        displayList: this.data.collection
       });
     }
+  },
+
+  /**
+   * 清除搜索
+   */
+  clearSearch() {
+    this.setData({
+      searchKeyword: '',
+      isSearching: false,
+      searchResult: [],
+      displayList: this.data.collection
+    });
+  },
+
+  /**
+   * 退出搜索
+   */
+  exitSearch() {
+    this.clearSearch();
+  },
+
+  /**
+   * 卡片点击 - 跳转到详情页
+   */
+  onCardTap(e) {
+    const { id } = e.currentTarget.dataset;
+    console.log('点击卡片, id:', id);
+
+    wx.navigateTo({
+      url: `/pages/detail/detail?id=${id}`
+    });
   },
 
   /**
@@ -80,162 +173,28 @@ Page({
    */
   deleteCollection(e) {
     const { id } = e.currentTarget.dataset;
-    
+    console.log('删除, id:', id);
+
     wx.showModal({
       title: '确认删除',
-      content: '确定要删除这个收藏吗？',
+      content: '确定要删除这条收藏记录吗？',
+      confirmColor: '#ff3b30',
       success: (res) => {
         if (res.confirm) {
-          // 从收藏列表中删除
           let collection = wx.getStorageSync('userCollection') || [];
-          collection = collection.filter(item => item.id !== id);
+          collection = collection.filter(item => !(item.id == id || item._id == id));
           wx.setStorageSync('userCollection', collection);
-
-          // 同时更新版别数据
-          this.clearVariantImages(id);
-
-          wx.showToast({
-            title: '删除成功',
-            icon: 'success'
-          });
-
           this.loadData();
+          wx.showToast({ title: '已删除', icon: 'success' });
         }
       }
     });
   },
 
   /**
-   * 清除版别图片
+   * 跳转上传页
    */
-  clearVariantImages(variantId) {
-    const variants = wx.getStorageSync('coinVariants') || [];
-    
-    const clearImages = (list) => {
-      for (let variant of list) {
-        if (variant.id === variantId) {
-          variant.collected = false;
-          variant.images = [];
-          return true;
-        }
-        if (variant.subVariants) {
-          const found = clearImages(variant.subVariants);
-          if (found) return true;
-        }
-      }
-      return false;
-    };
-
-    clearImages(variants);
-    wx.setStorageSync('coinVariants', variants);
-  },
-
-  /**
-   * 清空所有数据
-   */
-  clearAllData() {
-    wx.showModal({
-      title: '警告',
-      content: '确定要清空所有收藏数据吗？此操作不可恢复！',
-      confirmColor: '#ff4444',
-      success: (res) => {
-        if (res.confirm) {
-          wx.setStorageSync('userCollection', []);
-          this.resetVariants();
-          
-          wx.showToast({
-            title: '已清空所有数据',
-            icon: 'success'
-          });
-
-          this.loadData();
-        }
-      }
-    });
-  },
-
-  /**
-   * 重置版别数据
-   */
-  resetVariants() {
-    const variants = wx.getStorageSync('coinVariants') || [];
-    
-    const resetVariant = (list) => {
-      list.forEach(variant => {
-        variant.collected = false;
-        variant.images = [];
-        if (variant.subVariants) {
-          variant.subVariants.forEach(sub => {
-            sub.collected = false;
-            sub.images = [];
-          });
-        }
-      });
-    };
-
-    resetVariant(variants);
-    wx.setStorageSync('coinVariants', variants);
-  },
-
-  /**
-   * 导出数据
-   */
-  exportData() {
-    const collection = wx.getStorageSync('userCollection') || [];
-    
-    if (collection.length === 0) {
-      wx.showToast({
-        title: '暂无可导出数据',
-        icon: 'none'
-      });
-      return;
-    }
-
-    // 生成简单的文本报告
-    let report = '古钱币收藏清单\n\n';
-    report += `导出时间：${this.formatDate(new Date())}\n`;
-    report += `总收藏：${collection.length} 个版别\n\n`;
-    report += '====================\n\n';
-
-    collection.forEach((item, index) => {
-      report += `${index + 1}. ${item.name}\n`;
-      report += `   收藏日期：${item.date}\n`;
-      report += `   图片数量：${item.images.length} 张\n\n`;
-    });
-
-    // 复制到剪贴板
-    wx.setClipboardData({
-      data: report,
-      success: () => {
-        wx.showToast({
-          title: '已复制到剪贴板',
-          icon: 'success'
-        });
-      }
-    });
-  },
-
-  /**
-   * 格式化日期
-   */
-  formatDate(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
-  },
-
-  /**
-   * 关于页面
-   */
-  showAbout() {
-    wx.showModal({
-      title: '关于',
-      content: '古钱币收藏小程序 v1.0\n\n帮助您整理和记录古钱币收藏，支持按分类、年代管理，上传图片记录版别。',
-      showCancel: false
-    });
+  goToUpload() {
+    wx.reLaunch({ url: '/pages/upload/upload' });
   }
 });
