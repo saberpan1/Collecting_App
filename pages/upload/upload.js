@@ -27,8 +27,6 @@ Page({
     // 新建版别相关
     showCreateModal: false,
     newVariantName: '',
-    newSubVariants: ['小平', '折二', '折三', '当十'],
-    subVariantOptions: ['小平', '折二', '折三', '当十', '折五', '折十', '大样', '小样'],
     isCreatingVariant: false
   },
 
@@ -90,6 +88,7 @@ Page({
    */
   loadCategories() {
     const categories = wx.getStorageSync('coinCategories') || [];
+    console.log('加载分类数据:', categories);
     this.setData({ categories });
   },
 
@@ -129,78 +128,6 @@ Page({
         break;
       }
     }
-  },
-
-  /**
-   * 打开分类选择器
-   */
-  openCategoryPicker() {
-    const { categories } = this.data;
-    if (!categories || categories.length === 0) {
-      wx.showToast({ title: '暂无分类数据', icon: 'none' });
-      return;
-    }
-
-    wx.showActionSheet({
-      itemList: categories.map(c => c.name),
-      success: (res) => {
-        this.onCategoryChange({ detail: { value: res.tapIndex } });
-      }
-    });
-  },
-
-  /**
-   * 打开年代选择器
-   */
-  openEraPicker() {
-    const { selectedCategory } = this.data;
-    if (!selectedCategory || !selectedCategory.eras) {
-      wx.showToast({ title: '请先选择分类', icon: 'none' });
-      return;
-    }
-
-    wx.showActionSheet({
-      itemList: selectedCategory.eras.map(e => e.name),
-      success: (res) => {
-        this.onEraChange({ detail: { value: res.tapIndex } });
-      }
-    });
-  },
-
-  /**
-   * 打开版别选择器
-   */
-  openVariantPicker() {
-    const { variants } = this.data;
-    if (!variants || variants.length === 0) {
-      wx.showToast({ title: '该年代下暂无版别', icon: 'none' });
-      return;
-    }
-
-    wx.showActionSheet({
-      itemList: variants.map(v => v.name),
-      success: (res) => {
-        this.onVariantChange({ detail: { value: res.tapIndex } });
-      }
-    });
-  },
-
-  /**
-   * 打开子版别选择器
-   */
-  openSubVariantPicker() {
-    const { selectedVariant } = this.data;
-    if (!selectedVariant || !selectedVariant.subVariants) {
-      wx.showToast({ title: '请先选择版别', icon: 'none' });
-      return;
-    }
-
-    wx.showActionSheet({
-      itemList: selectedVariant.subVariants.map(s => s.name),
-      success: (res) => {
-        this.onSubVariantChange({ detail: { value: res.tapIndex } });
-      }
-    });
   },
 
   /**
@@ -257,7 +184,11 @@ Page({
    */
   getVariantsByEra(eraId) {
     const allVariants = wx.getStorageSync('coinVariants') || [];
-    return allVariants.filter(v => v.eraId === eraId);
+    console.log('getVariantsByEra eraId:', eraId, 'type:', typeof eraId);
+    console.log('allVariants sample:', allVariants.slice(0, 3));
+    const result = allVariants.filter(v => v.eraId === eraId);
+    console.log('filtered variants:', result);
+    return result;
   },
 
   /**
@@ -266,8 +197,7 @@ Page({
   showCreateVariant() {
     this.setData({
       showCreateModal: true,
-      newVariantName: '',
-      newSubVariants: ['小平', '折二', '折三', '当十']
+      newVariantName: ''
     });
   },
 
@@ -290,36 +220,13 @@ Page({
   },
 
   /**
-   * 切换子版别
-   */
-  toggleSubVariant(e) {
-    const { value } = e.currentTarget.dataset;
-    let newSubVariants = [...this.data.newSubVariants];
-
-    if (newSubVariants.includes(value)) {
-      newSubVariants = newSubVariants.filter(v => v !== value);
-    } else {
-      newSubVariants.push(value);
-    }
-
-    this.setData({
-      newSubVariants: newSubVariants
-    });
-  },
-
-  /**
    * 创建新版别
    */
   createNewVariant() {
-    const { newVariantName, newSubVariants, selectedEra } = this.data;
+    const { newVariantName, selectedEra } = this.data;
 
     if (!newVariantName.trim()) {
       wx.showToast({ title: '请输入版别名称', icon: 'none' });
-      return;
-    }
-
-    if (newSubVariants.length === 0) {
-      wx.showToast({ title: '请至少选择一个子版别', icon: 'none' });
       return;
     }
 
@@ -331,12 +238,6 @@ Page({
       eraId: selectedEra.id,
       eraName: selectedEra.name,
       name: newVariantName,
-      subVariants: newSubVariants.map((subName, index) => ({
-        id: (maxId + 1) * 100 + index + 1,
-        name: `${newVariantName} - ${subName}`,
-        collected: false,
-        images: []
-      })),
       collected: false,
       images: []
     };
@@ -351,8 +252,7 @@ Page({
       variants: variants,
       variantIndex: variantIndex,
       selectedVariant: newVariant,
-      showCreateModal: false,
-      isCreatingVariant: false
+      showCreateModal: false
     });
 
     wx.showToast({ title: '创建成功', icon: 'success' });
@@ -657,7 +557,7 @@ Page({
       wx.setStorageSync('userCollection', collection);
     } else {
       collection = collection.map(item => {
-        if (item.id === subVariantId) {
+        if (item.id === variantId) {
           return {
             ...item,
             images: this.data.images,

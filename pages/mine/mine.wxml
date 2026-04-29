@@ -53,9 +53,11 @@
   <scroll-view
     scroll-y
     class="scroll-content"
-    refresher-enabled
+    refresher-enabled="{{scrollTop === 0}}"
     refresher-triggered="{{refreshing}}"
     bindrefresherrefresh="onRefresh"
+    bindscroll="onScroll"
+    scroll-top="{{scrollTop}}"
   >
     <!-- 收藏列表 -->
     <view class="section">

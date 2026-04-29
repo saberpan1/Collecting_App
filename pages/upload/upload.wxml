@@ -43,43 +43,75 @@
       </view>
 
       <view class="selector-card">
-        <view class="selector-row" bindtap="openCategoryPicker">
+        <view class="selector-row">
           <view class="selector-left">
             <view class="selector-icon coin-icon">钱</view>
             <view class="selector-info">
               <text class="selector-label">分类</text>
+            </view>
+          </view>
+          <picker
+            mode="selector"
+            range="{{categories}}"
+            range-key="name"
+            bindchange="onCategoryChange"
+            value="{{categoryIndex}}"
+          >
+            <view class="picker-control">
               <text class="selector-value {{selectedCategory ? '' : 'placeholder'}}">
                 {{selectedCategory ? selectedCategory.name : '请选择钱币分类'}}
               </text>
+              <text class="selector-arrow">›</text>
             </view>
-          </view>
-          <text class="selector-arrow">›</text>
+          </picker>
         </view>
 
-        <view class="selector-row {{selectedCategory ? '' : 'disabled'}}" bindtap="{{selectedCategory ? 'openEraPicker' : ''}}">
+        <view class="selector-row">
           <view class="selector-left">
             <view class="selector-icon era-icon">代</view>
             <view class="selector-info">
               <text class="selector-label">年代</text>
+            </view>
+          </view>
+          <picker
+            mode="selector"
+            range="{{selectedCategory.eras}}"
+            range-key="name"
+            bindchange="onEraChange"
+            value="{{eraIndex}}"
+            disabled="{{!selectedCategory}}"
+          >
+            <view class="picker-control {{!selectedCategory ? 'disabled' : ''}}">
               <text class="selector-value {{selectedEra ? '' : 'placeholder'}}">
                 {{selectedEra ? selectedEra.name : '请选择年代'}}
               </text>
+              <text class="selector-arrow">›</text>
             </view>
-          </view>
-          <text class="selector-arrow {{selectedCategory ? '' : 'disabled'}}">›</text>
+          </picker>
         </view>
 
-        <view class="selector-row {{selectedEra ? '' : 'disabled'}}" bindtap="{{selectedEra ? 'openVariantPicker' : ''}}">
+        <view class="selector-row">
           <view class="selector-left">
             <view class="selector-icon variant-icon">版</view>
             <view class="selector-info">
               <text class="selector-label">版别</text>
+            </view>
+          </view>
+          <picker
+            mode="selector"
+            range="{{variants}}"
+            range-key="name"
+            bindchange="onVariantChange"
+            value="{{variantIndex}}"
+            disabled="{{!selectedEra}}"
+          >
+            <view class="picker-control {{!selectedEra ? 'disabled' : ''}}">
               <text class="selector-value {{selectedVariant ? '' : 'placeholder'}}">
                 {{selectedVariant ? selectedVariant.name : '请选择版别'}}
               </text>
+              <text class="selector-arrow">›</text>
             </view>
-          </view>
-          <text class="selector-arrow {{selectedEra ? '' : 'disabled'}}">›</text>
+          </picker>
         </view>
       </view>
     </view>
@@ -184,23 +216,6 @@
       </view>
     </view>
 
-    <view class="section">
-      <view class="section-header">
-        <text class="section-title">备注说明</text>
-        <text class="note-counter">{{note.length}}/200</text>
-      </view>
-      <view class="note-card">
-        <textarea
-          class="note-textarea"
-          placeholder="添加备注信息，如：品相、来源、收藏故事..."
-          value="{{note}}"
-          bindinput="onNoteInput"
-          maxlength="200"
-          cursor-spacing="20"
-        />
-      </view>
-    </view>
-
     <!-- 入手价格 -->
     <view class="section">
       <view class="section-header">
@@ -219,6 +234,24 @@
           />
         </view>
         <text class="price-hint">选填，可帮助您统计收藏支出</text>
+      </view>
+    </view>
+
+    <!-- 备注说明 -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">备注说明</text>
+        <text class="note-counter">{{note.length}}/200</text>
+      </view>
+      <view class="note-card">
+        <textarea
+          class="note-textarea"
+          placeholder="添加备注信息，如：品相、来源、收藏故事..."
+          value="{{note}}"
+          bindinput="onNoteInput"
+          maxlength="200"
+          cursor-spacing="20"
+        />
       </view>
     </view>
 
@@ -263,12 +296,16 @@
       </view>
 
       <view class="success-actions">
-        <button class="btn-primary" bindtap="goToHome">
-          <text>返回首页</text>
-        </button>
-        <button class="btn-secondary" bindtap="continueUpload">
-          <text>继续上传</text>
-        </button>
+        <view class="action-row">
+          <button class="btn-primary" bindtap="goToHome">
+            <text>返回首页</text>
+          </button>
+        </view>
+        <view class="action-row">
+          <button class="btn-secondary" bindtap="continueUpload">
+            <text>继续上传</text>
+          </button>
+        </view>
       </view>
     </view>
   </view>
@@ -293,25 +330,6 @@
             bindinput="onNewVariantInput"
             cursor-spacing="10"
           />
-        </view>
-
-        <view class="form-group">
-          <text class="form-label">子版别（可多选）</text>
-          <view class="sub-variant-grid">
-            <view
-              class="sub-variant-chip {{newSubVariants.includes(item) ? 'selected' : ''}}"
-              wx:for="{{subVariantOptions}}"
-              wx:key="index"
-              data-value="{{item}}"
-              bindtap="toggleSubVariant"
-            >
-              <text>{{item}}</text>
-            </view>
-          </view>
-        </view>
-
-        <view class="form-tips">
-          <text>选择常见的子版别类型，或在保存后手动添加更多</text>
         </view>
       </view>
 

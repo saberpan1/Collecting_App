@@ -315,6 +315,10 @@
   transition: all var(--duration-fast) var(--ease-out);
 }
 
+.category-stat-card.disabled {
+  opacity: 0.4;
+}
+
 .card-hover {
   transform: translateY(-2rpx);
   box-shadow: var(--shadow-md) !important;
@@ -411,6 +415,10 @@
 .era-stat-item:last-child {
   border-bottom: none;
   border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+
+.era-stat-item.disabled {
+  opacity: 0.4;
 }
 
 .era-stat-main {

@@ -14,17 +14,18 @@ Page({
     searchResult: [],
     isSearching: false,
     refreshing: false,
+    scrollTop: 0,
     tabbarList: [
       { pagePath: 'pages/index/index', text: '首页' },
       { pagePath: 'pages/category/category', text: '分类' },
       { pagePath: 'pages/statistics/statistics', text: '统计' },
       { pagePath: 'pages/mine/mine', text: '我的' }
     ],
-    selectedTabBar: 3
+    selectedTabBar: 2
   },
 
   onShow() {
-    this.setData({ selectedTabBar: 3 });
+    this.setData({ selectedTabBar: 2 });
     this.loadData();
   },
 
@@ -66,10 +67,14 @@ Page({
    * 处理云数据库数据
    */
   processCloudCollection(cloudData) {
+    const variantIds = new Set();
     let totalImages = 0;
     let totalValue = 0;
 
     cloudData.forEach(item => {
+      if (item.variantId) {
+        variantIds.add(item.variantId);
+      }
       if (item.images) {
         totalImages += item.images.length;
       }
@@ -99,7 +104,7 @@ Page({
       collection: cloudData,
       displayList: displayList,
       stats: {
-        totalCollected: cloudData.length,
+        totalCollected: variantIds.size,
         totalImages: totalImages,
         totalValue: totalValue.toFixed(2)
       }
@@ -127,6 +132,15 @@ Page({
     setTimeout(() => {
       this.setData({ refreshing: false });
     }, 500);
+  },
+
+  /**
+   * 滚动监听
+   */
+  onScroll(e) {
+    this.setData({
+      scrollTop: e.detail.scrollTop
+    });
   },
 
   /**

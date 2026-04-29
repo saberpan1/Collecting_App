@@ -13,9 +13,11 @@
     class="content"
     enhanced
     enable-back-to-top
-    refresher-enabled
+    refresher-enabled="{{scrollTop === 0}}"
     bindrefresherrefresh="onRefresh"
     refresher-triggered="{{refreshing}}"
+    bindscroll="onScroll"
+    scroll-top="{{scrollTop}}"
   >
     <!-- 下拉刷新指示器 -->
     <view slot="refresher" class="refresh-container">
@@ -66,18 +68,18 @@
       <!-- 快速统计 -->
       <view class="quick-stats">
         <view class="quick-stat-item">
+          <text class="quick-stat-value">{{stats.collectedVariants}}</text>
+          <text class="quick-stat-label">收藏</text>
+        </view>
+        <view class="quick-stat-divider"></view>
+        <view class="quick-stat-item">
           <text class="quick-stat-value">{{stats.totalVariants}}</text>
-          <text class="quick-stat-label">总版别</text>
+          <text class="quick-stat-label">总收藏</text>
         </view>
         <view class="quick-stat-divider"></view>
         <view class="quick-stat-item">
-          <text class="quick-stat-value">{{stats.totalImages}}</text>
-          <text class="quick-stat-label">图片</text>
-        </view>
-        <view class="quick-stat-divider"></view>
-        <view class="quick-stat-item">
-          <text class="quick-stat-value">{{stats.totalVariants - stats.collectedVariants}}</text>
-          <text class="quick-stat-label">待收藏</text>
+          <text class="quick-stat-value">{{stats.totalValue > 0 ? '¥' + stats.totalValue : '-'}}</text>
+          <text class="quick-stat-label">价格总和</text>
         </view>
       </view>
     </view>
@@ -86,37 +88,24 @@
     <view class="section fade-in">
       <view class="section-header">
         <text class="section-title">分类统计</text>
-        <view class="more-btn" bindtap="viewAllCategories">
-          <text>查看全部</text>
-          <text class="arrow">›</text>
-        </view>
       </view>
 
       <view class="category-grid">
         <view
-          class="category-stat-card card"
+          class="category-stat-card card {{item.hasCollected ? '' : 'disabled'}}"
           wx:for="{{categoryStats}}"
           wx:key="name"
           data-category="{{item.name}}"
-          bindtap="viewCategoryDetail"
-          hover-class="card-hover"
+          bindtap="{{item.hasCollected ? 'viewCategoryDetail' : ''}}"
+          hover-class="{{item.hasCollected ? 'card-hover' : ''}}"
         >
           <view class="category-stat-header">
             <text class="category-stat-name">{{item.name}}</text>
-            <view class="category-stat-rate {{item.rate >= 50 ? 'high' : 'low'}}">
-              <text>{{item.rate}}%</text>
-            </view>
-          </view>
-
-          <view class="category-stat-bar">
-            <view class="bar-track">
-              <view class="bar-fill" style="width: {{item.rate}}%"></view>
-            </view>
           </view>
 
           <view class="category-stat-footer">
             <text class="category-stat-count">{{item.collected}} / {{item.total}}</text>
-            <text class="category-stat-unit">个版别</text>
+            <text class="category-stat-unit">已收藏</text>
           </view>
         </view>
       </view>
@@ -130,73 +119,26 @@
 
       <view class="era-list card">
         <view
-          class="era-stat-item"
+          class="era-stat-item {{item.hasCollected ? '' : 'disabled'}}"
           wx:for="{{eraStats}}"
           wx:key="eraName"
           data-era="{{item.eraName}}"
-          bindtap="viewEraDetail"
-          hover-class="item-hover"
+          data-era-id="{{item.eraId}}"
+          bindtap="{{item.hasCollected ? 'viewEraDetail' : ''}}"
+          hover-class="{{item.hasCollected ? 'item-hover' : ''}}"
         >
           <view class="era-stat-main">
             <view class="era-stat-info">
               <text class="era-stat-name">{{item.eraName}}</text>
               <text class="era-stat-category">{{item.categoryName}}</text>
             </view>
-            <view class="era-stat-badge {{item.rate >= 50 ? 'high' : 'low'}}">
-              <text>{{item.rate}}%</text>
-            </view>
-          </view>
-
-          <view class="era-stat-progress">
-            <view class="progress-track-small">
-              <view class="progress-fill-small" style="width: {{item.rate}}%"></view>
-            </view>
           </view>
 
           <view class="era-stat-footer">
-            <text class="era-stat-detail">已收藏 {{item.collected}} 个版别</text>
+            <text class="era-stat-detail">{{item.collected}} / {{item.total}} 已收藏</text>
           </view>
         </view>
       </view>
-    </view>
-
-    <!-- 最近活动 -->
-    <view class="section fade-in" wx:if="{{recentActivity.length > 0}}">
-      <view class="section-header">
-        <text class="section-title">最近收藏</text>
-        <view class="more-btn" bindtap="viewAllActivity">
-          <text>查看全部</text>
-          <text class="arrow">›</text>
-        </view>
-      </view>
-
-      <view class="activity-card card">
-        <view
-          class="activity-item"
-          wx:for="{{recentActivity}}"
-          wx:key="id"
-        >
-          <image
-            class="activity-image"
-            src="{{item.images[0] || ''}}"
-            mode="aspectFill"
-            lazy-load
-          />
-          <view class="activity-content">
-            <text class="activity-name">{{item.name}}</text>
-            <text class="activity-meta">{{item.date}}</text>
-          </view>
-          <view class="activity-badge">
-            <text class="badge-num">{{item.images.length}}</text>
-            <text class="badge-unit">张</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <!-- 加载更多 -->
-    <view class="load-more" wx:if="{{hasMoreActivity}}" bindtap="loadMoreActivity">
-      <text class="load-more-text">加载更多</text>
     </view>
 
     <!-- 空状态 -->

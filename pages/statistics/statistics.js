@@ -19,6 +19,7 @@ Page({
     // 性能优化
     lastUpdateTime: '',
     refreshing: false,
+    scrollTop: 0,
     loading: false,
     hasMoreActivity: false,
     activityPage: 1,
@@ -31,7 +32,7 @@ Page({
       { pagePath: 'pages/statistics/statistics', text: '统计' },
       { pagePath: 'pages/mine/mine', text: '我的' }
     ],
-    selectedTabBar: 2
+    selectedTabBar: 1
   },
 
   /**
@@ -45,7 +46,7 @@ Page({
    * 页面显示时刷新数据
    */
   onShow() {
-    this.setData({ selectedTabBar: 2 });
+    this.setData({ selectedTabBar: 1 });
     this.loadStatistics();
   },
 
@@ -62,103 +63,113 @@ Page({
    * 加载统计数据 - 优化版本
    */
   loadStatistics() {
-    // 显示加载状态
     this.setData({ loading: true });
 
-    // 使用异步处理避免阻塞 UI
-    setTimeout(() => {
-      const variants = wx.getStorageSync('coinVariants') || [];
-      const categories = wx.getStorageSync('coinCategories') || [];
-      const collection = wx.getStorageSync('userCollection') || [];
+    const db = wx.cloud.database();
 
-      // 使用 reduce 优化统计计算
-      const stats = this.calculateStats(variants);
-      const categoryStats = this.calculateCategoryStats(categories, variants);
-      const eraStats = this.calculateEraStats(categories, variants);
-      const recentActivity = this.getRecentActivity(collection, 1, this.data.activityPageSize);
+    db.collection('collections').get({
+      success: (res) => {
+        const cloudData = res.data || [];
+        const variants = wx.getStorageSync('coinVariants') || [];
+        const categories = wx.getStorageSync('coinCategories') || [];
 
-      this.setData({
-        stats,
-        categoryStats,
-        eraStats,
-        recentActivity,
-        lastUpdateTime: this.formatTime(new Date()),
-        loading: false,
-        hasMoreActivity: collection.length > this.data.activityPageSize
-      });
-    }, 100);
+        const categoryStats = this.calculateCategoryStats(categories, cloudData);
+        const eraStats = this.calculateEraStats(categories, cloudData);
+
+        // 总体统计
+        const variantIds = new Set();
+        let totalImages = 0;
+        let totalValue = 0;
+
+        cloudData.forEach(item => {
+          if (item.variantId) variantIds.add(item.variantId);
+          if (item.images) totalImages += item.images.length;
+          if (item.price) totalValue += parseFloat(item.price);
+        });
+
+        this.setData({
+          stats: {
+            totalVariants: variants.length,
+            collectedVariants: variantIds.size,
+            totalImages: totalImages,
+            totalValue: totalValue,
+            completionRate: variants.length > 0 ? Math.round(variantIds.size / variants.length * 100) : 0
+          },
+          categoryStats,
+          eraStats,
+          lastUpdateTime: this.formatTime(new Date()),
+          loading: false
+        });
+      },
+      fail: (err) => {
+        console.error('加载统计数据失败:', err);
+        this.setData({ loading: false });
+        wx.showToast({ title: '加载失败', icon: 'none' });
+      }
+    });
   },
 
   /**
-   * 计算统计数据 - 使用 reduce 优化
+   * 计算分类统计
    */
-  calculateStats(variants) {
-    const result = variants.reduce((acc, variant) => {
-      variant.subVariants.forEach(sub => {
-        acc.total++;
-        if (sub.collected) {
-          acc.collected++;
-          acc.images += (sub.images || []).length;
-        }
-      });
-      return acc;
-    }, { total: 0, collected: 0, images: 0 });
+  calculateCategoryStats(categories, cloudData) {
+    const variants = wx.getStorageSync('coinVariants') || [];
 
-    return {
-      totalVariants: result.total,
-      collectedVariants: result.collected,
-      totalImages: result.images,
-      completionRate: result.total > 0 ? Math.round(result.collected / result.total * 100) : 0
-    };
-  },
-
-  /**
-   * 计算分类统计 - 优化版本
-   */
-  calculateCategoryStats(categories, variants) {
     return categories.map(category => {
       const eraIds = category.eras.map(e => e.id);
-      const result = variants
-        .filter(v => eraIds.includes(v.eraId))
-        .reduce((acc, variant) => {
-          variant.subVariants.forEach(sub => {
-            acc.total++;
-            if (sub.collected) acc.collected++;
-          });
-          return acc;
-        }, { total: 0, collected: 0 });
+
+      // 该分类的总版别数
+      const categoryVariantCount = variants.filter(v => eraIds.includes(v.eraId)).length;
+
+      // 从云数据中筛选该分类的 variantId（去重）
+      const variantIds = new Set();
+      cloudData.forEach(item => {
+        if (item.variantId) {
+          const variant = variants.find(v => v.id === item.variantId);
+          if (variant && eraIds.includes(variant.eraId)) {
+            variantIds.add(item.variantId);
+          }
+        }
+      });
 
       return {
         name: category.name,
-        total: result.total,
-        collected: result.collected,
-        rate: result.total > 0 ? Math.round(result.collected / result.total * 100) : 0
+        total: categoryVariantCount,
+        collected: variantIds.size,
+        hasCollected: variantIds.size > 0
       };
     });
   },
 
   /**
-   * 计算年代统计 - 优化版本
+   * 计算年代统计
    */
-  calculateEraStats(categories, variants) {
+  calculateEraStats(categories, cloudData) {
+    const variants = wx.getStorageSync('coinVariants') || [];
+
     return categories.reduce((eraStats, category) => {
       const eraData = category.eras.map(era => {
-        const result = variants
-          .filter(v => v.eraId === era.id)
-          .reduce((acc, variant) => {
-            variant.subVariants.forEach(sub => {
-              acc.total++;
-              if (sub.collected) acc.collected++;
-            });
-            return acc;
-          }, { total: 0, collected: 0 });
+        // 该年代的总版别数
+        const eraVariantCount = variants.filter(v => v.eraId === era.id).length;
+
+        // 从云数据中筛选该年代的 variantId（去重）
+        const variantIds = new Set();
+        cloudData.forEach(item => {
+          if (item.variantId) {
+            const variant = variants.find(v => v.id === item.variantId);
+            if (variant && variant.eraId === era.id) {
+              variantIds.add(item.variantId);
+            }
+          }
+        });
 
         return {
           eraName: era.name,
           categoryName: category.name,
-          total: result.total,
-          collected: result.collected,
-          rate: result.total > 0 ? Math.round(result.collected / result.total * 100) : 0
+          eraId: era.id,
+          total: eraVariantCount,
+          collected: variantIds.size,
+          hasCollected: variantIds.size > 0
         };
       });
       return [...eraStats, ...eraData];
@@ -189,6 +200,15 @@ Page({
         duration: 1500
       });
     }, 800);
+  },
+
+  /**
+   * 滚动监听
+   */
+  onScroll(e) {
+    this.setData({
+      scrollTop: e.detail.scrollTop
+    });
   },
 
   /**
@@ -224,7 +244,7 @@ Page({
   viewCategoryDetail(e) {
     const { category } = e.currentTarget.dataset;
     wx.navigateTo({
-      url: `/pages/detail/detail?name=${encodeURIComponent(category)}`
+      url: `/pages/collection-list/collection-list?type=category&name=${encodeURIComponent(category)}`
     });
   },
 
@@ -232,9 +252,9 @@ Page({
    * 查看年代详情
    */
   viewEraDetail(e) {
-    const { era } = e.currentTarget.dataset;
+    const { era, eraId } = e.currentTarget.dataset;
     wx.navigateTo({
-      url: `/pages/detail/detail?eraName=${encodeURIComponent(era)}`
+      url: `/pages/collection-list/collection-list?type=era&name=${encodeURIComponent(era)}&eraId=${eraId}`
     });
   },
 
