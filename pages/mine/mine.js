@@ -1,5 +1,5 @@
 /**
- * 个人中心 - 简化调试版
+ * 个人中心 - 收藏展示版
  */
 Page({
   data: {
@@ -24,7 +24,6 @@ Page({
   },
 
   onShow() {
-    console.log('onShow 被调用');
     this.setData({ selectedTabBar: 3 });
     this.loadData();
   },
@@ -33,23 +32,44 @@ Page({
    * 加载数据
    */
   loadData() {
-    console.log('loadData 被调用');
-    // 先从本地存储加载，确保页面能显示
-    this.loadFromLocalStorage();
+    this.loadFromCloudDatabase();
   },
 
   /**
-   * 从本地存储加载
+   * 从云数据库加载收藏数据
    */
-  loadFromLocalStorage() {
-    console.log('从本地存储加载...');
-    const collection = wx.getStorageSync('userCollection') || [];
-    console.log('本地数据:', collection);
+  loadFromCloudDatabase() {
+    const db = wx.cloud.database();
 
+    db.collection('collections').orderBy('createTime', 'desc').get({
+      success: (res) => {
+        const cloudData = res.data || [];
+
+        if (cloudData.length > 0) {
+          this.processCloudCollection(cloudData);
+        } else {
+          this.setData({
+            collection: [],
+            displayList: [],
+            stats: { totalCollected: 0, totalImages: 0, totalValue: 0 }
+          });
+        }
+      },
+      fail: (err) => {
+        console.error('从云数据库加载失败:', err);
+        this.loadFromLocalStorage();
+      }
+    });
+  },
+
+  /**
+   * 处理云数据库数据
+   */
+  processCloudCollection(cloudData) {
     let totalImages = 0;
     let totalValue = 0;
 
-    collection.forEach(item => {
+    cloudData.forEach(item => {
       if (item.images) {
         totalImages += item.images.length;
       }
@@ -58,38 +78,50 @@ Page({
       }
     });
 
-    const displayList = collection.map(item => {
+    const displayList = cloudData.map(item => {
       let displayUrl = '';
       if (item.images && item.images.length > 0) {
-        displayUrl = item.images[0].url || item.images[0] || '';
+        const firstImg = item.images[0];
+        if (firstImg.url) {
+          displayUrl = firstImg.url;
+        } else if (firstImg.fileID) {
+          displayUrl = firstImg.fileID;
+        }
       }
       return {
         ...item,
-        _id: item.id || item._id || Date.now(),
+        _id: item._id,
         displayUrl: displayUrl
       };
     });
 
-    console.log('displayList:', displayList);
-
     this.setData({
-      collection: collection,
+      collection: cloudData,
       displayList: displayList,
       stats: {
-        totalCollected: collection.length,
+        totalCollected: cloudData.length,
         totalImages: totalImages,
         totalValue: totalValue.toFixed(2)
       }
     });
 
-    console.log('数据设置完成');
+    if (this.data.isSearching) {
+      this.performSearch(this.data.searchKeyword);
+    }
+  },
+
+  /**
+   * 从本地存储加载
+   */
+  loadFromLocalStorage() {
+    const collection = wx.getStorageSync('userCollection') || [];
+    this.processCloudCollection(collection);
   },
 
   /**
    * 下拉刷新
    */
   onRefresh() {
-    console.log('下拉刷新');
     this.setData({ refreshing: true });
     this.loadData();
     setTimeout(() => {
@@ -102,32 +134,10 @@ Page({
    */
   onSearchInput(e) {
     const keyword = e.detail.value.trim();
-    console.log('搜索:', keyword);
     this.setData({ searchKeyword: keyword });
 
     if (keyword) {
-      const results = this.data.collection.filter(item => {
-        const name = (item.name || '').toLowerCase();
-        return name.includes(keyword.toLowerCase());
-      });
-
-      const searchResult = results.map(item => {
-        let displayUrl = '';
-        if (item.images && item.images.length > 0) {
-          displayUrl = item.images[0].url || item.images[0] || '';
-        }
-        return {
-          ...item,
-          _id: item.id || item._id || Date.now(),
-          displayUrl: displayUrl
-        };
-      });
-
-      this.setData({
-        isSearching: true,
-        searchResult: searchResult,
-        displayList: searchResult
-      });
+      this.performSearch(keyword);
     } else {
       this.setData({
         isSearching: false,
@@ -135,6 +145,43 @@ Page({
         displayList: this.data.collection
       });
     }
+  },
+
+  /**
+   * 执行搜索
+   */
+  performSearch(keyword) {
+    const results = this.data.collection.filter(item => {
+      const name = (item.name || '').toLowerCase();
+      const era = (item.eraName || '').toLowerCase();
+      const variant = (item.variantName || '').toLowerCase();
+      const search = keyword.toLowerCase();
+
+      return name.includes(search) || era.includes(search) || variant.includes(search);
+    });
+
+    const searchResult = results.map(item => {
+      let displayUrl = '';
+      if (item.images && item.images.length > 0) {
+        const firstImg = item.images[0];
+        if (firstImg.url) {
+          displayUrl = firstImg.url;
+        } else if (firstImg.fileID) {
+          displayUrl = firstImg.fileID;
+        }
+      }
+      return {
+        ...item,
+        _id: item._id,
+        displayUrl: displayUrl
+      };
+    });
+
+    this.setData({
+      isSearching: true,
+      searchResult: searchResult,
+      displayList: searchResult
+    });
   },
 
   /**
@@ -161,7 +208,6 @@ Page({
    */
   onCardTap(e) {
     const { id } = e.currentTarget.dataset;
-    console.log('点击卡片, id:', id);
 
     wx.navigateTo({
       url: `/pages/detail/detail?id=${id}`
@@ -173,7 +219,6 @@ Page({
    */
   deleteCollection(e) {
     const { id } = e.currentTarget.dataset;
-    console.log('删除, id:', id);
 
     wx.showModal({
       title: '确认删除',
@@ -181,12 +226,26 @@ Page({
       confirmColor: '#ff3b30',
       success: (res) => {
         if (res.confirm) {
-          let collection = wx.getStorageSync('userCollection') || [];
-          collection = collection.filter(item => !(item.id == id || item._id == id));
-          wx.setStorageSync('userCollection', collection);
-          this.loadData();
-          wx.showToast({ title: '已删除', icon: 'success' });
+          this.deleteFromDatabase(id);
         }
+      }
+    });
+  },
+
+  /**
+   * 从数据库删除
+   */
+  deleteFromDatabase(id) {
+    const db = wx.cloud.database();
+
+    db.collection('collections').doc(id).remove({
+      success: () => {
+        wx.showToast({ title: '已删除', icon: 'success' });
+        this.loadData();
+      },
+      fail: (err) => {
+        console.error('删除失败:', err);
+        wx.showToast({ title: '删除失败', icon: 'none' });
       }
     });
   },

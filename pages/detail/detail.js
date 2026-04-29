@@ -24,18 +24,27 @@ Page({
   },
 
   /**
-   * 根据ID加载收藏
+   * 根据ID从云数据库加载收藏
    */
   loadItemById(id) {
-    const collection = wx.getStorageSync('userCollection') || [];
-    const item = collection.find(i => String(i.id) === String(id) || String(i._id) === String(id));
+    const db = wx.cloud.database();
 
-    if (item) {
-      this.setItemData(item);
-    } else {
-      wx.showToast({ title: '未找到该收藏', icon: 'none' });
-      setTimeout(() => wx.navigateBack(), 1500);
-    }
+    db.collection('collections').doc(id).get({
+      success: (res) => {
+        console.log('从云数据库加载:', res.data);
+        if (res.data) {
+          this.setItemData(res.data);
+        } else {
+          wx.showToast({ title: '未找到该收藏', icon: 'none' });
+          setTimeout(() => wx.navigateBack(), 1500);
+        }
+      },
+      fail: (err) => {
+        console.error('加载失败:', err);
+        wx.showToast({ title: '加载失败', icon: 'none' });
+        setTimeout(() => wx.navigateBack(), 1500);
+      }
+    });
   },
 
   /**
@@ -88,7 +97,6 @@ Page({
       formatCreateTime: formatCreateTime
     });
 
-    // 加载云存储图片URL
     this.loadCloudImageUrls();
   },
 
@@ -195,18 +203,24 @@ Page({
    */
   performDelete() {
     const item = this.data.item;
-    let collection = wx.getStorageSync('userCollection') || [];
+    const db = wx.cloud.database();
 
-    collection = collection.filter(i => {
-      const idMatch = (String(i.id) === String(item.id)) || (String(i._id) === String(item._id));
-      return !idMatch;
+    const collectionId = item._id || item.id;
+
+    db.collection('collections').doc(collectionId).remove({
+      success: () => {
+        // 同时删除本地存储
+        let localCollection = wx.getStorageSync('userCollection') || [];
+        localCollection = localCollection.filter(i => String(i.id) !== String(item.variantId || item.id));
+        wx.setStorageSync('userCollection', localCollection);
+
+        wx.showToast({ title: '已删除', icon: 'success' });
+        setTimeout(() => wx.navigateBack(), 1500);
+      },
+      fail: (err) => {
+        console.error('删除失败:', err);
+        wx.showToast({ title: '删除失败', icon: 'none' });
+      }
     });
-
-    wx.setStorageSync('userCollection', collection);
-    wx.showToast({ title: '已删除', icon: 'success' });
-
-    setTimeout(() => {
-      wx.navigateBack();
-    }, 1500);
   }
 });

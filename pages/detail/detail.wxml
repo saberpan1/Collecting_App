@@ -56,7 +56,7 @@
     <!-- 详细信息卡片 -->
     <view class="info-card">
       <!-- 入手价格 -->
-      <view class="info-row" wx:if="{{item.price > 0}}">
+      <view class="info-row" wx:if="{{item.price}}">
         <view class="info-icon-wrap price">
           <text class="info-icon">¥</text>
         </view>
@@ -78,7 +78,7 @@
       </view>
 
       <!-- 收藏时间 -->
-      <view class="info-row" wx:if="{{item.createTime}}">
+      <view class="info-row" wx:if="{{formatCreateTime}}">
         <view class="info-icon-wrap time">
           <text class="info-icon">🕐</text>
         </view>
@@ -101,7 +101,7 @@
     </view>
 
     <!-- 备注 -->
-    <view class="note-card" wx:if="{{item.note}}">
+    <view class="note-card" wx:if="{{item.note && item.note.length > 0}}">
       <view class="note-header">
         <text class="note-icon">📝</text>
         <text class="note-title">备注说明</text>
