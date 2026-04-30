@@ -1,10 +1,5 @@
 <!--个人中心 - 收藏展示版-->
 <view class="page-container">
-  <!-- 导航栏 -->
-  <view class="nav-bar">
-    <text class="nav-title">我的收藏</text>
-  </view>
-
   <!-- 搜索栏 -->
   <view class="search-bar">
     <view class="search-input-wrap">
@@ -49,13 +44,12 @@
     </view>
   </view>
 
-  <!-- 下拉刷新 -->
+  <!-- 收藏列表 -->
   <scroll-view
     scroll-y
     class="scroll-content"
-    refresher-enabled="{{scrollTop === 0}}"
-    refresher-triggered="{{refreshing}}"
-    bindrefresherrefresh="onRefresh"
+    enhanced
+    enable-back-to-top
     bindscroll="onScroll"
     scroll-top="{{scrollTop}}"
   >

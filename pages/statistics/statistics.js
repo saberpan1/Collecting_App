@@ -18,7 +18,6 @@ Page({
 
     // 性能优化
     lastUpdateTime: '',
-    refreshing: false,
     scrollTop: 0,
     loading: false,
     hasMoreActivity: false,
@@ -28,7 +27,6 @@ Page({
     // TabBar
     tabbarList: [
       { pagePath: 'pages/index/index', text: '首页' },
-      { pagePath: 'pages/category/category', text: '分类' },
       { pagePath: 'pages/statistics/statistics', text: '统计' },
       { pagePath: 'pages/mine/mine', text: '我的' }
     ],
@@ -183,23 +181,6 @@ Page({
     const start = (page - 1) * pageSize;
     const end = start + pageSize;
     return collection.slice(start, end);
-  },
-
-  /**
-   * 下拉刷新
-   */
-  onRefresh() {
-    this.setData({ refreshing: true });
-
-    setTimeout(() => {
-      this.loadStatistics();
-      this.setData({ refreshing: false });
-      wx.showToast({
-        title: '刷新成功',
-        icon: 'success',
-        duration: 1500
-      });
-    }, 800);
   },
 
   /**

@@ -1,31 +1,14 @@
 <!--统计页 - 全面优化版-->
 <view class="page">
-  <!-- 导航栏 -->
-  <view class="navbar">
-    <view class="navbar-left"></view>
-    <text class="navbar-title">收藏统计</text>
-    <view class="navbar-right"></view>
-  </view>
-
   <!-- 内容区域 -->
   <scroll-view
     scroll-y
     class="content"
     enhanced
     enable-back-to-top
-    refresher-enabled="{{scrollTop === 0}}"
-    bindrefresherrefresh="onRefresh"
-    refresher-triggered="{{refreshing}}"
     bindscroll="onScroll"
     scroll-top="{{scrollTop}}"
   >
-    <!-- 下拉刷新指示器 -->
-    <view slot="refresher" class="refresh-container">
-      <view class="refresh-animate" wx:if="{{refreshing}}">
-        <text class="refresh-icon">↻</text>
-        <text class="refresh-text">刷新中...</text>
-      </view>
-    </view>
 
     <!-- 总体概览卡片 -->
     <view class="overview-card card fade-in">

@@ -13,11 +13,9 @@ Page({
     searchKeyword: '',
     searchResult: [],
     isSearching: false,
-    refreshing: false,
     scrollTop: 0,
     tabbarList: [
       { pagePath: 'pages/index/index', text: '首页' },
-      { pagePath: 'pages/category/category', text: '分类' },
       { pagePath: 'pages/statistics/statistics', text: '统计' },
       { pagePath: 'pages/mine/mine', text: '我的' }
     ],
@@ -121,17 +119,6 @@ Page({
   loadFromLocalStorage() {
     const collection = wx.getStorageSync('userCollection') || [];
     this.processCloudCollection(collection);
-  },
-
-  /**
-   * 下拉刷新
-   */
-  onRefresh() {
-    this.setData({ refreshing: true });
-    this.loadData();
-    setTimeout(() => {
-      this.setData({ refreshing: false });
-    }, 500);
   },
 
   /**

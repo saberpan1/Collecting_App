@@ -17,15 +17,6 @@
         </view>
       </view>
 
-      <!-- 分类图标 - 典籍书架 -->
-      <view wx:elif="{{item.pagePath === 'pages/category/category'}}" class="icon-wrapper">
-        <view class="book-icon">
-          <view class="book-spine spine-1"></view>
-          <view class="book-spine spine-2"></view>
-          <view class="book-spine spine-3"></view>
-        </view>
-      </view>
-
       <!-- 统计图标 - 数据仪表盘 -->
       <view wx:elif="{{item.pagePath === 'pages/statistics/statistics'}}" class="icon-wrapper">
         <view class="chart-icon">
